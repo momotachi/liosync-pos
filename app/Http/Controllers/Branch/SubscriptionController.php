@@ -57,7 +57,7 @@ class SubscriptionController extends Controller
                 'branch_id' => $branch->id,
                 'subscription_plan_id' => $plan->id,
                 'start_date' => now()->toDateString(),
-                'end_date' => now()->addMonths($validated['months'])->toDateString(),
+                'end_date' => now()->addMonths((int)$validated['months'])->toDateString(),
                 'status' => 'pending',
                 'payment_proof' => $proofPath,
             ]);

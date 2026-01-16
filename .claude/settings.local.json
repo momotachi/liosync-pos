@@ -14,7 +14,9 @@
       "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan tinker --execute=\"echo json_encode\\(App\\\\Models\\\\User::where\\(''email'', ''skj01@eshjuice.co.id''\\)->first\\([''email'', ''password_hint'']\\)\\);\")",
       "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan view:clear)",
       "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan route:clear)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

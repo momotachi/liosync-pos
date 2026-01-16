@@ -742,12 +742,17 @@
             }
         });
 
-        // Prevent double submission
+        // Handle form submission
         document.getElementById('submitBtn').addEventListener('click', function(e) {
             const form = this.closest('form');
+            e.preventDefault(); // Prevent default form submission
+
             if (form.checkValidity()) {
                 this.disabled = true;
                 this.innerHTML = 'Creating Account...';
+
+                // Submit the form
+                form.submit();
             }
         });
     </script>

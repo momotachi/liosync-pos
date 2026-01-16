@@ -21,6 +21,7 @@ class SubscriptionPayment extends Model
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'months' => 'int',
         'payment_date' => 'date',
         'confirmed_at' => 'datetime',
     ];
