@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Cycle</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/cycle-logo.png') }}">
+    <title>Login - Liosync POS</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/liosync-logo.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
     <style>
@@ -502,7 +502,7 @@
         <div class="login-card">
             <!-- Logo Section -->
             <div class="logo-section">
-                <img src="{{ asset('images/cycle-logo-text.png') }}" alt="Cycle Logo" class="logo-icon">
+                <img src="{{ asset('images/liosync-logo.png') }}" alt="Liosync POS" class="logo-icon">
                 <p class="logo-subtitle">Point of Sale System</p>
             </div>
 
@@ -575,8 +575,9 @@
 
             <!-- Footer -->
             <div class="footer-text">
+                <p>Don't have an account? <a href="{{ route('register') }}">Sign Up</a></p>
                 <p>Forgot your password? <a href="#">Reset here</a></p>
-                <p class="version-text">Cycle v2.4.0</p>
+                <p class="version-text">Liosync POS v1.0.0</p>
             </div>
         </div>
     </div>
