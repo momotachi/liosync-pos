@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -33,6 +32,7 @@ class RegisterController extends Controller
     /**
      * Handle a registration request for the application.
      * Same flow as Superadmin creating a company.
+     * No branch created - user can create branches after login.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
@@ -49,11 +49,6 @@ class RegisterController extends Controller
             'company_email' => 'nullable|email|max:255',
             'company_address' => 'nullable|string|max:500',
             'tax_id' => 'nullable|string|max:100',
-
-            // Branch Information (for multi-branch companies)
-            'branch_name' => 'nullable|string|max:255',
-            'branch_code' => 'nullable|string|max:20',
-            'branch_phone' => 'nullable|string|max:50',
 
             // Admin Account
             'admin_name' => 'required|string|max:255',
@@ -79,10 +74,11 @@ class RegisterController extends Controller
                 'email' => $validated['company_email'] ?? $validated['admin_email'],
                 'tax_id' => $validated['tax_id'] ?? null,
                 'is_active' => true,
-                'has_branches' => true, // Default to multi-branch for signup
+                'has_branches' => true, // Multi-branch enabled by default
             ]);
 
             // Create Admin User (same as superadmin - role='admin')
+            // NO branch assigned initially - user will create branches after login
             $admin = User::create([
                 'name' => $validated['admin_name'],
                 'email' => $validated['admin_email'],
@@ -92,38 +88,20 @@ class RegisterController extends Controller
                 'role' => 'admin', // Use 'admin' like superadmin, not 'company_admin'
                 'is_active' => true,
                 'company_id' => $company->id,
-                'branch_id' => null, // Company admin has no branch initially
+                'branch_id' => null, // No branch initially - user will create branches
             ]);
 
             // Assign Company Admin role using Spatie
             $admin->assignRole('Company Admin');
-
-            // Create first branch (user wants to create branch during signup)
-            $branchCode = $validated['branch_code'] ?? $companyCode . '_MAIN';
-            $branchName = $validated['branch_name'] ?? ($validated['company_name'] . ' - Main Branch');
-
-            $branch = Branch::create([
-                'company_id' => $company->id,
-                'name' => $branchName,
-                'code' => $branchCode,
-                'address' => $validated['company_address'] ?? null,
-                'phone' => $validated['branch_phone'] ?? $validated['company_phone'] ?? null,
-                'email' => $validated['company_email'] ?? null,
-                'is_active' => true,
-            ]);
-
-            // Update admin to have this branch
-            $admin->update(['branch_id' => $branch->id]);
 
             DB::commit();
 
             // Log the user in
             Auth::login($admin);
 
-            // Set session variables
+            // Set session variables (no branch_id yet)
             session([
                 'company_id' => $company->id,
-                'branch_id' => $branch->id,
             ]);
 
             Log::info('New company registered via signup', [
@@ -131,12 +109,11 @@ class RegisterController extends Controller
                 'company_name' => $company->name,
                 'user_id' => $admin->id,
                 'user_email' => $admin->email,
-                'branch_id' => $branch->id,
             ]);
 
             return redirect()
                 ->route('company.dashboard', ['company' => $company->id])
-                ->with('success', 'Registration successful! Welcome to Liosync POS. Your company has been created.');
+                ->with('success', 'Registration successful! Welcome to Liosync POS. Please create your first branch to get started.');
 
         } catch (\Exception $e) {
             DB::rollBack();

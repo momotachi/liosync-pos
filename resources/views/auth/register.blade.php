@@ -465,6 +465,7 @@
             <div class="welcome-text">
                 <h2>Create Company Account</h2>
                 <p>Register your company to get started</p>
+                <p style="font-size: 0.75rem; margin-top: 0.5rem;">You can add branches after registration</p>
             </div>
 
             <!-- Error Message -->
@@ -570,54 +571,6 @@
                     </div>
                 </div>
 
-                <!-- Branch Information Section -->
-                <div class="form-section">
-                    <div class="form-section-title">Branch Information</div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="branch_name">Branch Name *</label>
-                        <div class="input-wrapper">
-                            <input class="form-input"
-                                id="branch_name"
-                                name="branch_name"
-                                value="{{ old('branch_name') }}"
-                                placeholder="Main Branch or Head Office"
-                                type="text"
-                                required>
-                            <span class="material-icons-round">store</span>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="branch_code">Branch Code</label>
-                            <div class="input-wrapper">
-                                <input class="form-input"
-                                    id="branch_code"
-                                    name="branch_code"
-                                    value="{{ old('branch_code') }}"
-                                    placeholder="AUTO (optional)"
-                                    type="text"
-                                    maxlength="20">
-                                <span class="material-icons-round">tag</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="branch_phone">Branch Phone</label>
-                            <div class="input-wrapper">
-                                <input class="form-input"
-                                    id="branch_phone"
-                                    name="branch_phone"
-                                    value="{{ old('branch_phone') }}"
-                                    placeholder="Branch phone"
-                                    type="tel">
-                                <span class="material-icons-round">phone_in_talk</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Admin Account Section -->
                 <div class="form-section">
                     <div class="form-section-title">Admin Account</div>
@@ -718,7 +671,6 @@
         // Auto-generate company code from company name if empty
         document.getElementById('company_name').addEventListener('blur', function() {
             const companyCode = document.getElementById('company_code');
-            const branchName = document.getElementById('branch_name');
 
             // Auto-generate company code if empty
             if (!companyCode.value) {
@@ -727,11 +679,6 @@
                     const code = companyName.substring(0, 3).toUpperCase() + Math.floor(100 + Math.random() * 900);
                     companyCode.value = code;
                 }
-            }
-
-            // Auto-fill branch name if empty
-            if (branchName && branchName.value === '') {
-                branchName.value = this.value.trim() + ' - Main Branch';
             }
         });
 
