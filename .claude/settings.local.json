@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan make:migration:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan migrate)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan migrate:status)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\":*)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan tinker --execute=\"DB::table\\(''settings''\\)->where\\(''key'', ''currency''\\)->update\\([''value'' => ''IDR'']\\); DB::table\\(''settings''\\)->where\\(''key'', ''currency_symbol''\\)->update\\([''value'' => ''Rp'']\\); echo ''Done'';\")",
+      "Bash(php artisan tinker:*)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO~1\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan tinker --execute=\"DB::table\\(''settings''\\)->where\\(''key'', ''currency''\\)->update\\([''value'' => ''IDR'']\\); DB::table\\(''settings''\\)->where\\(''key'', ''currency_symbol''\\)->update\\([''value'' => ''Rp'']\\); echo ''Currency updated to Indonesia Rupiah'';\")",
+      "Bash(php:*)",
+      "Bash(composer require:*)",
+      "Bash(\"C:\\\\Users\\\\HUTOMO TRI H\\\\.config\\\\herd\\\\bin\\\\php.bat\" artisan tinker --execute=\"echo json_encode\\(App\\\\Models\\\\User::where\\(''email'', ''skj01@eshjuice.co.id''\\)->first\\([''email'', ''password_hint'']\\)\\);\")"
+    ]
+  }
+}
