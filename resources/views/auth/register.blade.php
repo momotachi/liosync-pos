@@ -220,6 +220,19 @@
             margin-bottom: 0.5rem;
         }
 
+        .required-indicator {
+            color: #ef4444;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-left: 2px;
+        }
+
+        .optional-indicator {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            font-weight: 400;
+        }
+
         .input-wrapper {
             position: relative;
         }
@@ -466,6 +479,10 @@
                 <h2>Create Company Account</h2>
                 <p>Register your company to get started</p>
                 <p style="font-size: 0.75rem; margin-top: 0.5rem;">You can add branches after registration</p>
+                <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; font-size: 0.75rem;">
+                    <span><span style="color: #ef4444; font-weight: bold;">*</span> Required</span>
+                    <span style="color: #9ca3af;">(Optional)</span>
+                </div>
             </div>
 
             <!-- Error Message -->
@@ -490,7 +507,10 @@
                     <div class="form-section-title">Company Information</div>
 
                     <div class="form-group">
-                        <label class="form-label" for="company_name">Company Name *</label>
+                        <label class="form-label" for="company_name">
+                            Company Name
+                            <span class="required-indicator">*</span>
+                        </label>
                         <div class="input-wrapper">
                             <input class="form-input"
                                 id="company_name"
@@ -505,7 +525,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="company_code">Company Code</label>
+                            <label class="form-label" for="company_code">
+                                Company Code
+                                <span class="optional-indicator">(Optional)</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="company_code"
@@ -519,7 +542,10 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="company_type">Business Type *</label>
+                            <label class="form-label" for="company_type">
+                                Business Type
+                                <span class="required-indicator">*</span>
+                            </label>
                             <select class="form-select" id="company_type" name="company_type" required>
                                 <option value="">Select type</option>
                                 <option value="resto" {{ old('company_type') == 'resto' ? 'selected' : '' }}>Restaurant / Cafe</option>
@@ -529,7 +555,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="company_structure">Company Structure *</label>
+                        <label class="form-label" for="company_structure">
+                            Company Structure
+                            <span class="required-indicator">*</span>
+                        </label>
                         <select class="form-select" id="company_structure" name="company_structure" required>
                             <option value="">Select structure</option>
                             <option value="multi" {{ old('company_structure') == 'multi' ? 'selected' : '' }}>Multi-Branch (Multiple locations)</option>
@@ -540,7 +569,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="company_phone">Phone Number</label>
+                            <label class="form-label" for="company_phone">
+                                Phone Number
+                                <span class="optional-indicator">(Optional)</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="company_phone"
@@ -553,7 +585,10 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="tax_id">Tax ID (NPWP)</label>
+                            <label class="form-label" for="tax_id">
+                                Tax ID (NPWP)
+                                <span class="optional-indicator">(Optional)</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="tax_id"
@@ -568,7 +603,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="company_address">Address</label>
+                        <label class="form-label" for="company_address">
+                            Address
+                            <span class="optional-indicator">(Optional)</span>
+                        </label>
                         <div class="input-wrapper">
                             <input class="form-input"
                                 id="company_address"
@@ -587,7 +625,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="admin_name">Full Name *</label>
+                            <label class="form-label" for="admin_name">
+                                Full Name
+                                <span class="required-indicator">*</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="admin_name"
@@ -602,7 +643,10 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="admin_email">Email *</label>
+                            <label class="form-label" for="admin_email">
+                                Email
+                                <span class="required-indicator">*</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="admin_email"
@@ -619,7 +663,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="admin_password">Password *</label>
+                            <label class="form-label" for="admin_password">
+                                Password
+                                <span class="required-indicator">*</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="admin_password"
@@ -636,7 +683,10 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="admin_phone">Admin Phone</label>
+                            <label class="form-label" for="admin_phone">
+                                Admin Phone
+                                <span class="optional-indicator">(Optional)</span>
+                            </label>
                             <div class="input-wrapper">
                                 <input class="form-input"
                                     id="admin_phone"
