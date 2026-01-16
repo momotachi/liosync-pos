@@ -504,17 +504,30 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label class="form-label" for="company_code">Company Code</label>
+                            <div class="input-wrapper">
+                                <input class="form-input"
+                                    id="company_code"
+                                    name="company_code"
+                                    value="{{ old('company_code') }}"
+                                    placeholder="AUTO (optional)"
+                                    type="text"
+                                    maxlength="50">
+                                <span class="material-icons-round">tag</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label" for="company_type">Business Type *</label>
                             <select class="form-select" id="company_type" name="company_type" required>
                                 <option value="">Select type</option>
-                                <option value="restaurant" {{ old('company_type') == 'restaurant' ? 'selected' : '' }}>Restaurant</option>
-                                <option value="retail" {{ old('company_type') == 'retail' ? 'selected' : '' }}>Retail Store</option>
-                                <option value="cafe" {{ old('company_type') == 'cafe' ? 'selected' : '' }}>Cafe</option>
-                                <option value="bar" {{ old('company_type') == 'bar' ? 'selected' : '' }}>Bar</option>
-                                <option value="other" {{ old('company_type') == 'other' ? 'selected' : '' }}>Other</option>
+                                <option value="resto" {{ old('company_type') == 'resto' ? 'selected' : '' }}>Restaurant / Cafe</option>
+                                <option value="toko" {{ old('company_type') == 'toko' ? 'selected' : '' }}>Retail Store</option>
                             </select>
                         </div>
+                    </div>
 
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="company_phone">Phone Number</label>
                             <div class="input-wrapper">
@@ -525,6 +538,20 @@
                                     placeholder="08xxxxxxxxxx"
                                     type="tel">
                                 <span class="material-icons-round">phone</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="tax_id">Tax ID (NPWP)</label>
+                            <div class="input-wrapper">
+                                <input class="form-input"
+                                    id="tax_id"
+                                    name="tax_id"
+                                    value="{{ old('tax_id') }}"
+                                    placeholder="Optional"
+                                    type="text"
+                                    maxlength="100">
+                                <span class="material-icons-round">receipt</span>
                             </div>
                         </div>
                     </div>
@@ -597,12 +624,12 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="name">Full Name *</label>
+                            <label class="form-label" for="admin_name">Full Name *</label>
                             <div class="input-wrapper">
                                 <input class="form-input"
-                                    id="name"
-                                    name="name"
-                                    value="{{ old('name') }}"
+                                    id="admin_name"
+                                    name="admin_name"
+                                    value="{{ old('admin_name') }}"
                                     placeholder="Admin full name"
                                     type="text"
                                     required
@@ -612,12 +639,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="email">Email *</label>
+                            <label class="form-label" for="admin_email">Email *</label>
                             <div class="input-wrapper">
                                 <input class="form-input"
-                                    id="email"
-                                    name="email"
-                                    value="{{ old('email') }}"
+                                    id="admin_email"
+                                    name="admin_email"
+                                    value="{{ old('admin_email') }}"
                                     placeholder="admin@example.com"
                                     type="email"
                                     required
@@ -629,68 +656,35 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="password">Password *</label>
+                            <label class="form-label" for="admin_password">Password *</label>
                             <div class="input-wrapper">
                                 <input class="form-input"
-                                    id="password"
-                                    name="password"
+                                    id="admin_password"
+                                    name="admin_password"
                                     placeholder="Min. 8 characters"
                                     type="password"
                                     required
                                     autocomplete="new-password">
                                 <span class="material-icons-round">lock</span>
-                                <span class="material-icons-round toggle-password" onclick="togglePassword('password', this)">
+                                <span class="material-icons-round toggle-password" onclick="togglePassword('admin_password', this)">
                                     visibility
                                 </span>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label" for="password_confirmation">Confirm Password *</label>
+                            <label class="form-label" for="admin_phone">Admin Phone</label>
                             <div class="input-wrapper">
                                 <input class="form-input"
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    placeholder="Confirm password"
-                                    type="password"
-                                    required
-                                    autocomplete="new-password">
-                                <span class="material-icons-round">lock</span>
-                                <span class="material-icons-round toggle-password" onclick="togglePassword('password_confirmation', this)">
-                                    visibility
-                                </span>
+                                    id="admin_phone"
+                                    name="admin_phone"
+                                    value="{{ old('admin_phone') }}"
+                                    placeholder="08xxxxxxxxxx"
+                                    type="tel"
+                                    autocomplete="tel">
+                                <span class="material-icons-round">smartphone</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="phone">Admin Phone (for password hint)</label>
-                        <div class="input-wrapper">
-                            <input class="form-input"
-                                id="phone"
-                                name="phone"
-                                value="{{ old('phone') }}"
-                                placeholder="08xxxxxxxxxx"
-                                type="tel"
-                                autocomplete="tel">
-                            <span class="material-icons-round">smartphone</span>
-                        </div>
-                        <small style="color: #6b7280; font-size: 0.75rem;">Used for password recovery hint</small>
-                    </div>
-                </div>
-
-                <!-- Subscription Section -->
-                <div class="form-section">
-                    <div class="form-section-title">Choose Plan</div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="subscription_plan">Select Plan *</label>
-                        <select class="form-select" id="subscription_plan" name="subscription_plan" required>
-                            <option value="">Select a plan</option>
-                            <option value="1" {{ old('subscription_plan') == '1' ? 'selected' : '' }}>Starter Plan - Free (14 days trial)</option>
-                            <option value="2" {{ old('subscription_plan') == '2' ? 'selected' : '' }}>Professional Plan - Rp 500.000/month</option>
-                            <option value="3" {{ old('subscription_plan') == '3' ? 'selected' : '' }}>Enterprise Plan - Rp 1.500.000/month</option>
-                        </select>
                     </div>
                 </div>
 
@@ -721,22 +715,22 @@
             }
         }
 
-        // Auto-generate branch code from company name if empty
+        // Auto-generate company code from company name if empty
         document.getElementById('company_name').addEventListener('blur', function() {
-            const branchCode = document.getElementById('branch_code');
+            const companyCode = document.getElementById('company_code');
             const branchName = document.getElementById('branch_name');
 
-            if (!branchCode.value && branchName.value === '') {
-                // Generate simple code from company name
+            // Auto-generate company code if empty
+            if (!companyCode.value) {
                 const companyName = this.value.trim();
                 if (companyName.length > 0) {
                     const code = companyName.substring(0, 3).toUpperCase() + Math.floor(100 + Math.random() * 900);
-                    branchCode.value = code;
+                    companyCode.value = code;
                 }
             }
 
             // Auto-fill branch name if empty
-            if (branchName.value === '') {
+            if (branchName && branchName.value === '') {
                 branchName.value = this.value.trim() + ' - Main Branch';
             }
         });

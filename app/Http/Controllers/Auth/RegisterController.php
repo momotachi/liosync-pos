@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
-use App\Models\BranchSubscription;
 use App\Models\Company;
-use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +32,7 @@ class RegisterController extends Controller
 
     /**
      * Handle a registration request for the application.
+     * Same flow as Superadmin creating a company.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
@@ -44,96 +43,82 @@ class RegisterController extends Controller
         $validated = $request->validate([
             // Company Information
             'company_name' => 'required|string|max:255',
-            'company_type' => 'required|in:restaurant,retail,cafe,bar,other',
+            'company_code' => 'nullable|string|max:50|unique:companies,code',
+            'company_type' => 'required|in:resto,toko',
             'company_phone' => 'nullable|string|max:50',
+            'company_email' => 'nullable|email|max:255',
             'company_address' => 'nullable|string|max:500',
+            'tax_id' => 'nullable|string|max:100',
 
-            // Branch Information
-            'branch_name' => 'required|string|max:255',
+            // Branch Information (for multi-branch companies)
+            'branch_name' => 'nullable|string|max:255',
             'branch_code' => 'nullable|string|max:20',
             'branch_phone' => 'nullable|string|max:50',
 
             // Admin Account
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:50',
-
-            // Subscription
-            'subscription_plan' => 'required|exists:subscription_plans,id',
+            'admin_name' => 'required|string|max:255',
+            'admin_email' => 'required|string|email|max:255|unique:users,email',
+            'admin_password' => 'required|string|min:8',
+            'admin_phone' => 'nullable|string|max:50',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Generate company code and slug
-            $companyCode = strtoupper(Str::substr(Str::slug($validated['company_name']), 0, 10)) . rand(100, 999);
-            $companySlug = Str::slug($validated['company_name']) . '-' . Str::lower($companyCode);
+            // Generate company code if not provided
+            $companyCode = $validated['company_code'] ?? strtoupper(Str::substr(Str::slug($validated['company_name']), 0, 10)) . rand(100, 999);
 
-            // Create Company
+            // Create Company (same as superadmin)
             $company = Company::create([
                 'name' => $validated['company_name'],
                 'code' => $companyCode,
-                'slug' => $companySlug,
+                'slug' => Str::slug($validated['company_name']) . '-' . time(),
                 'type' => $validated['company_type'],
                 'address' => $validated['company_address'] ?? null,
                 'phone' => $validated['company_phone'] ?? null,
-                'email' => $validated['email'],
+                'email' => $validated['company_email'] ?? $validated['admin_email'],
+                'tax_id' => $validated['tax_id'] ?? null,
                 'is_active' => true,
-                'has_branches' => true,
+                'has_branches' => true, // Default to multi-branch for signup
             ]);
 
-            // Generate branch code if not provided
-            $branchCode = $validated['branch_code'] ?: strtoupper(Str::substr(Str::slug($validated['branch_name']), 0, 10)) . rand(100, 999);
+            // Create Admin User (same as superadmin - role='admin')
+            $admin = User::create([
+                'name' => $validated['admin_name'],
+                'email' => $validated['admin_email'],
+                'password' => Hash::make($validated['admin_password']),
+                'password_hint' => $validated['admin_password'], // Store original password
+                'phone' => $validated['admin_phone'] ?? null,
+                'role' => 'admin', // Use 'admin' like superadmin, not 'company_admin'
+                'is_active' => true,
+                'company_id' => $company->id,
+                'branch_id' => null, // Company admin has no branch initially
+            ]);
 
-            // Create Branch
+            // Assign Company Admin role using Spatie
+            $admin->assignRole('Company Admin');
+
+            // Create first branch (user wants to create branch during signup)
+            $branchCode = $validated['branch_code'] ?? $companyCode . '_MAIN';
+            $branchName = $validated['branch_name'] ?? ($validated['company_name'] . ' - Main Branch');
+
             $branch = Branch::create([
                 'company_id' => $company->id,
-                'name' => $validated['branch_name'],
+                'name' => $branchName,
                 'code' => $branchCode,
                 'address' => $validated['company_address'] ?? null,
                 'phone' => $validated['branch_phone'] ?? $validated['company_phone'] ?? null,
+                'email' => $validated['company_email'] ?? null,
                 'is_active' => true,
             ]);
 
-            // Get subscription plan
-            $plan = SubscriptionPlan::find($validated['subscription_plan']);
-
-            // Calculate trial end date (14 days from now)
-            $trialEndDate = now()->addDays(14);
-
-            // Create Branch Subscription
-            $subscription = BranchSubscription::create([
-                'branch_id' => $branch->id,
-                'subscription_plan_id' => $plan->id,
-                'plan_name' => $plan->name,
-                'plan_price' => $plan->price,
-                'plan_duration_months' => $plan->duration_months,
-                'status' => 'active',
-                'start_date' => now(),
-                'end_date' => $trialEndDate,
-                'is_trial' => true,
-                'auto_renew' => false,
-            ]);
-
-            // Create Admin User (Company Admin)
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'phone' => $validated['phone'] ?? null,
-                'role' => 'company_admin',
-                'company_id' => $company->id,
-                'branch_id' => $branch->id,
-            ]);
-
-            // Assign permissions using Spatie
-            $user->assignRole('Company Admin');
+            // Update admin to have this branch
+            $admin->update(['branch_id' => $branch->id]);
 
             DB::commit();
 
             // Log the user in
-            Auth::login($user);
+            Auth::login($admin);
 
             // Set session variables
             session([
@@ -141,17 +126,17 @@ class RegisterController extends Controller
                 'branch_id' => $branch->id,
             ]);
 
-            Log::info('New company registered', [
+            Log::info('New company registered via signup', [
                 'company_id' => $company->id,
                 'company_name' => $company->name,
-                'user_id' => $user->id,
-                'user_email' => $user->email,
-                'subscription_id' => $subscription->id,
+                'user_id' => $admin->id,
+                'user_email' => $admin->email,
+                'branch_id' => $branch->id,
             ]);
 
             return redirect()
                 ->route('company.dashboard', ['company' => $company->id])
-                ->with('success', 'Registration successful! Welcome to Liosync POS. Your 14-day trial has started.');
+                ->with('success', 'Registration successful! Welcome to Liosync POS. Your company has been created.');
 
         } catch (\Exception $e) {
             DB::rollBack();
