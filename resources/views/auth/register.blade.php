@@ -528,6 +528,16 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label class="form-label" for="company_structure">Company Structure *</label>
+                        <select class="form-select" id="company_structure" name="company_structure" required>
+                            <option value="">Select structure</option>
+                            <option value="multi" {{ old('company_structure') == 'multi' ? 'selected' : '' }}>Multi-Branch (Multiple locations)</option>
+                            <option value="single" {{ old('company_structure') == 'single' ? 'selected' : '' }}>Single-Branch (One location)</option>
+                        </select>
+                        <small style="color: #6b7280; font-size: 0.75rem;">Multi-Branch: Manage multiple branches. Single-Branch: One location only.</small>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="company_phone">Phone Number</label>

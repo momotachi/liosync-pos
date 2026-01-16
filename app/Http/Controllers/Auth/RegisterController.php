@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -32,7 +33,6 @@ class RegisterController extends Controller
     /**
      * Handle a registration request for the application.
      * Same flow as Superadmin creating a company.
-     * No branch created - user can create branches after login.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
@@ -45,6 +45,7 @@ class RegisterController extends Controller
             'company_name' => 'required|string|max:255',
             'company_code' => 'nullable|string|max:50|unique:companies,code',
             'company_type' => 'required|in:resto,toko',
+            'company_structure' => 'required|in:single,multi',
             'company_phone' => 'nullable|string|max:50',
             'company_email' => 'nullable|email|max:255',
             'company_address' => 'nullable|string|max:500',
@@ -60,6 +61,10 @@ class RegisterController extends Controller
         try {
             DB::beginTransaction();
 
+            // Determine if multi-branch or single
+            $hasBranches = $validated['company_structure'] === 'multi';
+            $isSingleBranch = $validated['company_structure'] === 'single';
+
             // Generate company code if not provided
             $companyCode = $validated['company_code'] ?? strtoupper(Str::substr(Str::slug($validated['company_name']), 0, 10)) . rand(100, 999);
 
@@ -74,12 +79,11 @@ class RegisterController extends Controller
                 'email' => $validated['company_email'] ?? $validated['admin_email'],
                 'tax_id' => $validated['tax_id'] ?? null,
                 'is_active' => true,
-                'has_branches' => true, // Multi-branch enabled by default
+                'has_branches' => $hasBranches,
             ]);
 
             // Create Admin User (same as superadmin - role='admin')
-            // NO branch assigned initially - user will create branches after login
-            $admin = User::create([
+            $adminData = [
                 'name' => $validated['admin_name'],
                 'email' => $validated['admin_email'],
                 'password' => Hash::make($validated['admin_password']),
@@ -88,8 +92,26 @@ class RegisterController extends Controller
                 'role' => 'admin', // Use 'admin' like superadmin, not 'company_admin'
                 'is_active' => true,
                 'company_id' => $company->id,
-                'branch_id' => null, // No branch initially - user will create branches
-            ]);
+                'branch_id' => null, // Will be set below if single branch
+            ];
+
+            // For single-branch, create default branch and assign admin to it
+            if ($isSingleBranch) {
+                $branch = Branch::create([
+                    'company_id' => $company->id,
+                    'name' => 'Main Branch',
+                    'code' => $companyCode . '_MAIN',
+                    'address' => $validated['company_address'] ?? null,
+                    'phone' => $validated['company_phone'] ?? null,
+                    'email' => $validated['company_email'] ?? null,
+                    'is_active' => true,
+                ]);
+
+                // Assign admin to this branch
+                $adminData['branch_id'] = $branch->id;
+            }
+
+            $admin = User::create($adminData);
 
             // Assign Company Admin role using Spatie
             $admin->assignRole('Company Admin');
@@ -99,21 +121,29 @@ class RegisterController extends Controller
             // Log the user in
             Auth::login($admin);
 
-            // Set session variables (no branch_id yet)
-            session([
-                'company_id' => $company->id,
-            ]);
+            // Set session variables
+            $sessionData = ['company_id' => $company->id];
+            if ($isSingleBranch && isset($branch)) {
+                $sessionData['branch_id'] = $branch->id;
+            }
+            session($sessionData);
 
             Log::info('New company registered via signup', [
                 'company_id' => $company->id,
                 'company_name' => $company->name,
+                'company_structure' => $validated['company_structure'],
                 'user_id' => $admin->id,
                 'user_email' => $admin->email,
+                'branch_id' => $admin->branch_id,
             ]);
+
+            $successMessage = $isSingleBranch
+                ? 'Registration successful! Welcome to Liosync POS. Your account is ready to use.'
+                : 'Registration successful! Welcome to Liosync POS. Please create your first branch to get started.';
 
             return redirect()
                 ->route('company.dashboard', ['company' => $company->id])
-                ->with('success', 'Registration successful! Welcome to Liosync POS. Please create your first branch to get started.');
+                ->with('success', $successMessage);
 
         } catch (\Exception $e) {
             DB::rollBack();
