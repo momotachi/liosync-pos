@@ -65,8 +65,8 @@ class RegisterController extends Controller
             $hasBranches = $validated['company_structure'] === 'multi';
             $isSingleBranch = $validated['company_structure'] === 'single';
 
-            // Generate company code if not provided
-            $companyCode = $validated['company_code'] ?? strtoupper(Str::substr(Str::slug($validated['company_name']), 0, 10)) . rand(100, 999);
+            // Generate company code if not provided (always generate)
+            $companyCode = $validated['company_code'] ?: strtoupper(Str::substr(Str::slug($validated['company_name']), 0, 10)) . rand(100, 999);
 
             // Create Company (same as superadmin)
             $company = Company::create([
