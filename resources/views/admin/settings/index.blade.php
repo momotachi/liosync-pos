@@ -3,6 +3,29 @@
 @section('title', 'Settings')
 
 @section('content')
+{{-- Branch Context Indicator --}}
+@if(session('active_branch_id'))
+    <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center gap-3">
+        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-2xl">store</span>
+        <div>
+            <p class="text-sm font-medium text-blue-900 dark:text-blue-300">Managing Settings for Branch</p>
+            <p class="text-xs text-blue-700 dark:text-blue-400">{{ \App\Models\Branch::find(session('active_branch_id'))?->name ?? 'Unknown Branch' }}</p>
+        </div>
+        <a href="/company/{{ session('company_id') }}/branches"
+           class="ml-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+            Back to Branches
+        </a>
+    </div>
+@elseif(auth()->user()->branch)
+    <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
+        <span class="material-symbols-outlined text-green-600 dark:text-green-400 text-2xl">store</span>
+        <div>
+            <p class="text-sm font-medium text-green-900 dark:text-green-300">Your Branch Settings</p>
+            <p class="text-xs text-green-700 dark:text-green-400">{{ auth()->user()->branch->name }}</p>
+        </div>
+    </div>
+@endif
+
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
     <div class="flex items-center gap-3">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">System Settings</h2>
@@ -20,7 +43,7 @@
     @method('PUT')
 
     <div class="space-y-6">
-        @foreach($settings as $group => $groupData)
+        @foreach($settings as $group => $settingsCollection)
             <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
                 <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -37,13 +60,13 @@
                         @else
                             <span class="material-symbols-outlined text-primary">tune</span>
                         @endif
-                        {{ $groupData['label'] }}
+                        {{ ucfirst($group) }}
                     </h3>
                 </div>
 
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach($groupData['settings'] as $setting)
+                        @foreach($settingsCollection as $setting)
                             <div class="@if(in_array($setting->key, ['store_name', 'store_address', 'receipt_header', 'receipt_footer', 'default_customer_name', 'tax_name'])) md:col-span-2 @endif">
                                 @if($setting->type === 'boolean')
                                     <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">

@@ -69,8 +69,8 @@
                         <select name="category_id" id="category_id"
                             class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                             <option value="">No Category</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ old('category_id', $item->category_id) == $category->id ? 'selected' : '' }}>
+                            @foreach($allCategories as $category)
+                                <option value="{{ $category->id }}" data-type="{{ $category->type }}" {{ old('category_id', $item->category_id) == $category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
@@ -327,6 +327,35 @@
     const items = @json($items);
     let recipeCount = {{ $item->itemRecipes->count() }};
 
+    function filterCategoryDropdown() {
+        const purchaseCheckbox = document.querySelector('input[name="is_purchase"]');
+        const salesCheckbox = document.querySelector('input[name="is_sales"]');
+        const categorySelect = document.getElementById('category_id');
+        const currentValue = categorySelect.value;
+
+        // Show/hide options based on checkbox state
+        const options = categorySelect.querySelectorAll('option[data-type]');
+        options.forEach(option => {
+            const categoryType = option.getAttribute('data-type');
+            let shouldShow = false;
+
+            if (purchaseCheckbox.checked && categoryType === 'material') {
+                shouldShow = true;
+            }
+            if (salesCheckbox.checked && categoryType === 'product') {
+                shouldShow = true;
+            }
+
+            option.style.display = shouldShow ? '' : 'none';
+        });
+
+        // If currently selected category is now hidden, clear selection
+        const selectedOption = categorySelect.querySelector(`option[value="${currentValue}"]`);
+        if (selectedOption && selectedOption.style.display === 'none') {
+            categorySelect.value = '';
+        }
+    }
+
     function togglePurchaseFields() {
         const checkbox = document.querySelector('input[name="is_purchase"]');
         const fields = document.getElementById('purchaseFields');
@@ -335,6 +364,7 @@
         } else {
             fields.classList.add('hidden');
         }
+        filterCategoryDropdown();
     }
 
     function toggleSalesFields() {
@@ -348,6 +378,7 @@
             salesFields.classList.add('hidden');
             recipeFields.classList.add('hidden');
         }
+        filterCategoryDropdown();
     }
 
     // Handle custom unit dropdown
@@ -511,6 +542,9 @@
         }
         updateHppAndProfit();
     }
+
+    // Initial category filter based on checkbox state
+    filterCategoryDropdown();
 
     // Form submission with AJAX
     document.getElementById('editItemForm').addEventListener('submit', function(e) {

@@ -1,6 +1,6 @@
-@extends('layouts.superadmin')
+@extends('layouts.company')
 
-@section('title', 'Edit Company Admin - ' . $user->name)
+@section('title', 'Edit User - ' . $user->name)
 
 @section('content')
 <!-- Page Header -->
@@ -8,11 +8,11 @@
     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
         <a href="{{ route('company.users.index', $company) }}" class="hover:text-primary transition-colors">Company Users</a>
         <span class="material-symbols-outlined text-sm">chevron_right</span>
-        <span>Edit Company Admin</span>
+        <span>Edit User</span>
     </div>
     <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Company Admin</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Update company admin information for {{ $user->name }}</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit User</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Update user information for {{ $user->name }}</p>
     </div>
 </div>
 
@@ -72,7 +72,7 @@
         </div>
 
         <!-- Password Confirmation -->
-        <div class="mb-6">
+        <div class="mb-4">
             <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 Confirm Password <span class="text-gray-400">(leave blank to keep current)</span>
             </label>
@@ -83,15 +83,71 @@
                    placeholder="Confirm new password">
         </div>
 
+        <!-- Role -->
+        <div class="mb-4">
+            <label for="role" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Role <span class="text-red-500">*</span>
+            </label>
+            <select id="role"
+                    name="role"
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                    required
+                    onchange="toggleBranchField()">
+                @foreach($roles as $role)
+                    <option value="{{ $role->name }}" {{ $user->roles->first()->name === $role->name ? 'selected' : '' }}>
+                        {{ $role->name }}
+                    </option>
+                @endforeach
+            </select>
+            @error('role')
+            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Branch (only for Branch Admin) -->
+        <div class="mb-6" id="branchField" style="display: {{ old('role', $user->roles->first()->name) === 'Branch Admin' ? 'block' : 'none' }};">
+            <label for="branch_id" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Branch <span class="text-red-500">*</span>
+            </label>
+            <select id="branch_id"
+                    name="branch_id"
+                    class="w-full px-4 py-3 rounded-lg border border-border-light dark:border-border-dark bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-colors">
+                <option value="">Select Branch</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ old('branch_id', $user->branch_id) == $branch->id ? 'selected' : '' }}>
+                        {{ $branch->name }}
+                    </option>
+                @endforeach
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Required for Branch Admin role</p>
+            @error('branch_id')
+            <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
         <!-- Info -->
         <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-6">
             <div class="flex items-start gap-2">
                 <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-sm mt-0.5">info</span>
                 <p class="text-sm text-blue-700 dark:text-blue-300">
-                    This user is a <strong>Company Admin</strong> with access to all branches within {{ $company->name }}.
+                    <strong>Company Admin</strong> has access to all branches within {{ $company->name }}.
+                    <strong>Branch Admin</strong> has access only to the assigned branch.
                 </p>
             </div>
         </div>
+
+        <script>
+        function toggleBranchField() {
+            const roleSelect = document.getElementById('role');
+            const branchField = document.getElementById('branchField');
+
+            if (roleSelect.value === 'Branch Admin') {
+                branchField.style.display = 'block';
+            } else {
+                branchField.style.display = 'none';
+            }
+        }
+        </script>
 
         <!-- Actions -->
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-border-light dark:border-border-dark">

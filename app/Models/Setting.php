@@ -2,186 +2,114 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class Setting extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
+        'branch_id',
         'key',
         'value',
         'type',
         'group',
         'label',
         'description',
-        'company_id',
     ];
 
     protected $casts = [
-        'value' => 'string',
+        'value' => 'array',
     ];
 
     /**
-     * Get the company that owns the setting.
+     * Get the branch that owns the setting.
      */
-    public function company()
+    public function branch()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Branch::class);
     }
 
     /**
-     * Get a setting value by key (respects company context)
+     * Get the effective branch ID for settings.
+     * Returns current session branch_id or user's branch_id.
+     */
+    private static function getEffectiveBranchId()
+    {
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
+
+        // Use authenticated user's branch
+        $user = Auth::user();
+        return $user ? $user->branch_id : null;
+    }
+
+    /**
+     * Get a setting value by key for the current branch.
      */
     public static function get(string $key, $default = null)
     {
-        $companyId = Session::get('company_id');
+        $branchId = self::getEffectiveBranchId();
 
-        $query = static::where('key', $key);
-
-        // First try to get company-specific setting
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        } else {
-            $query->whereNull('company_id');
-        }
-
-        $setting = $query->first();
-
-        // If no company-specific setting found, fall back to global setting
-        if (!$setting && $companyId) {
-            $setting = static::where('key', $key)->whereNull('company_id')->first();
-        }
+        $setting = static::where('key', $key)
+            ->where('branch_id', $branchId)
+            ->first();
 
         if (!$setting) {
             return $default;
         }
 
+        // Return value based on type
         return match ($setting->type) {
-            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-            'number' => is_numeric($setting->value) ? floatval($setting->value) : $default,
+            'boolean' => (bool) $setting->value,
+            'number' => (int) $setting->value,
             'json' => json_decode($setting->value, true),
             default => $setting->value,
         };
     }
 
     /**
-     * Set a setting value by key (respects company context)
+     * Set a setting value for the current branch.
      */
     public static function set(string $key, $value): void
     {
-        $companyId = Session::get('company_id');
+        $branchId = self::getEffectiveBranchId();
 
-        $query = static::where('key', $key);
+        $setting = static::where('key', $key)
+            ->where('branch_id', $branchId)
+            ->first();
 
-        if ($companyId) {
-            $query->where('company_id', $companyId);
-        } else {
-            $query->whereNull('company_id');
+        if ($setting) {
+            $setting->update(['value' => $value]);
         }
-
-        $setting = $query->first();
-
-        if (!$setting) {
-            // Try to find a global setting to use as template
-            $globalSetting = static::where('key', $key)->whereNull('company_id')->first();
-
-            if ($globalSetting && $companyId) {
-                // Create company-specific setting based on global
-                $setting = $globalSetting->replicate();
-                $setting->company_id = $companyId;
-            } else {
-                return;
-            }
-        }
-
-        $setting->value = match ($setting->type) {
-            'boolean' => $value ? '1' : '0',
-            'number' => (string) $value,
-            'json' => json_encode($value),
-            default => (string) $value,
-        };
-
-        $setting->save();
     }
 
     /**
-     * Get all settings grouped by group (respects company context)
-     */
-    public static function grouped(): array
-    {
-        $companyId = Session::get('company_id');
-
-        $query = static::query();
-
-        if ($companyId) {
-            // Get company-specific settings, fall back to global for missing ones
-            $companySettings = static::where('company_id', $companyId)->get()->keyBy('key');
-            $globalSettings = static::whereNull('company_id')->get()->keyBy('key');
-
-            $settings = $globalSettings->map(function ($globalSetting) use ($companySettings) {
-                return $companySettings->get($globalSetting->key, $globalSetting);
-            });
-        } else {
-            $settings = static::all();
-        }
-
-        $settings = $settings->groupBy('group');
-
-        $groupLabels = [
-            'general' => 'General Settings',
-            'pos' => 'POS Settings',
-            'receipt' => 'Receipt Settings',
-            'tax' => 'Tax Settings',
-            'inventory' => 'Inventory Settings',
-        ];
-
-        $orderedGroups = [];
-        foreach ($groupLabels as $group => $label) {
-            if ($settings->has($group)) {
-                $orderedGroups[$group] = [
-                    'label' => $label,
-                    'settings' => $settings->get($group),
-                ];
-            }
-        }
-
-        // Add any groups not defined
-        foreach ($settings as $group => $groupSettings) {
-            if (!isset($orderedGroups[$group])) {
-                $orderedGroups[$group] = [
-                    'label' => ucfirst($group) . ' Settings',
-                    'settings' => $groupSettings,
-                ];
-            }
-        }
-
-        return $orderedGroups;
-    }
-
-    /**
-     * Scope to get settings by group
+     * Scope to get settings by group.
      */
     public function scopeByGroup($query, string $group)
     {
-        return $query->where('group', $group);
+        return $query->where('group', $group)->orderBy('label');
     }
 
     /**
-     * Scope to get settings by company
+     * Get all settings for the current branch grouped by their group.
      */
-    public function scopeForCompany($query, int $companyId)
+    public static function grouped()
     {
-        return $query->where('company_id', $companyId);
+        $branchId = self::getEffectiveBranchId();
+
+        return static::where('branch_id', $branchId)
+            ->get()
+            ->groupBy('group');
     }
 
     /**
-     * Scope to get global settings (no company)
+     * Scope to get settings for a specific branch.
      */
-    public function scopeGlobal($query)
+    public function scopeForBranch($query, $branchId)
     {
-        return $query->whereNull('company_id');
+        return $query->where('branch_id', $branchId);
     }
 }

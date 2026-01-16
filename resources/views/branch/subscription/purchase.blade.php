@@ -85,9 +85,9 @@
                 <!-- Bank Details -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <p class="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">Transfer to:</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: BCA</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: 1234567890</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: Cycle POS System</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ \App\Models\Setting::get('bank_name', 'BCA') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ \App\Models\Setting::get('bank_account_number', '1234567890') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ \App\Models\Setting::get('bank_account_name', 'Cycle POS System') }}</p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4">

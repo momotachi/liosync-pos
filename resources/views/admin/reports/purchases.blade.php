@@ -13,6 +13,9 @@
     .dark .purchase-row:hover {
         background-color: rgb(55 65 81);
     }
+    canvas {
+        max-height: 300px;
+    }
 </style>
 @endpush
 
@@ -20,38 +23,45 @@
     <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Laporan Pembelian</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Rekapitulasi pembelian bahan baku.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Rekapitulasi pembelian bahan baku dengan filter periode.</p>
         </div>
-        <div class="flex items-center gap-3 bg-card-light dark:bg-card-dark p-1.5 rounded-lg border border-border-light dark:border-border-dark shadow-sm">
-            <button class="px-4 py-1.5 text-sm font-medium rounded-md bg-primary text-white shadow-sm">Today</button>
-            <div class="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1"></div>
-            <div class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 font-medium">
-                <span class="mr-2">{{ now()->format('M d, Y') }}</span>
+        <form method="GET" action="{{ route('admin.reports.purchases') }}" class="flex items-center gap-3">
+            <!-- Search -->
+            <div class="relative">
+                <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Cari No. PO / Supplier..."
+                    class="pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent w-64">
+                <span class="material-symbols-outlined absolute left-3 top-2 text-gray-400">search</span>
             </div>
-        </div>
+
+            <!-- Period Filter -->
+            <select name="period" id="period" onchange="this.form.submit()"
+                class="px-3 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary">
+                <option value="today" {{ $period === 'today' ? 'selected' : '' }}>Hari Ini</option>
+                <option value="week" {{ $period === 'week' ? 'selected' : '' }}>Minggu Ini</option>
+                <option value="month" {{ $period === 'month' ? 'selected' : '' }}>Bulan Ini</option>
+                <option value="custom" {{ $period === 'custom' ? 'selected' : '' }}>Rentang Kustom</option>
+            </select>
+
+            @if($period === 'custom')
+                <input type="date" name="start_date" value="{{ $startDate ?? '' }}"
+                    class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <input type="date" name="end_date" value="{{ $endDate ?? '' }}"
+                    class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <button type="submit" class="px-4 py-2 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark">
+                    Terapkan
+                </button>
+            @endif
+        </form>
     </header>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <!-- Total Purchases -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Total Purchase Value -->
         <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Pembelian</p>
-                    <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-500 mt-2">{{ number_format($totalPurchases, 2, ',', '.') }} unit</h3>
-                </div>
-                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">inventory</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Value -->
-        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nilai Pembelian</p>
-                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-500 mt-2">Rp {{ number_format($totalPurchaseValue, 0, ',', '.') }}</h3>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Nilai Pembelian</p>
+                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-500 mt-2">Rp {{ number_format($metrics['total_purchase_value'], 0, ',', '.') }}</h3>
                 </div>
                 <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                     <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400">payments</span>
@@ -59,15 +69,87 @@
             </div>
         </div>
 
-        <!-- Transactions -->
+        <!-- Total Purchases -->
         <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Jumlah Transaksi</p>
-                    <h3 class="text-2xl font-bold text-purple-600 dark:text-purple-500 mt-2">{{ $totalTransactions }}</h3>
+                    <h3 class="text-2xl font-bold text-blue-600 dark:text-blue-500 mt-2">{{ $metrics['total_purchases'] }}</h3>
+                </div>
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">shopping_cart</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Value -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Rata-rata Nilai</p>
+                    <h3 class="text-2xl font-bold text-purple-600 dark:text-purple-500 mt-2">Rp {{ number_format($metrics['average_purchase_value'], 0, ',', '.') }}</h3>
                 </div>
                 <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <span class="material-symbols-outlined text-purple-600 dark:text-purple-400">receipt</span>
+                    <span class="material-symbols-outlined text-purple-600 dark:text-purple-400">calculate</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Items -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Item Dibeli</p>
+                    <h3 class="text-2xl font-bold text-orange-600 dark:text-orange-500 mt-2">{{ number_format($metrics['total_items'], 0, ',', '.') }}</h3>
+                </div>
+                <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <span class="material-symbols-outlined text-orange-600 dark:text-orange-400">inventory_2</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Purchases Over Time Chart -->
+        <div class="lg:col-span-2 bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+            <div class="p-6 border-b border-border-light dark:border-border-dark">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Grafik Pembelian</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Tren pembelian bahan baku periode ini</p>
+            </div>
+            <div class="p-6">
+                <canvas id="purchasesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Purchased Items -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+            <div class="p-6 border-b border-border-light dark:border-border-dark">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Item Terbanyak Dibeli</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Bahan baku paling banyak dibeli</p>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    @forelse($topItems as $item)
+                    @if($item->item)
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-red-600 dark:text-red-400">shopping_bag</span>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $item->item->name }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ number_format($item->total_quantity, 2, ',', '.') }} {{ $item->item->unit ?? '' }}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">Rp {{ number_format($item->total_cost, 0, ',', '.') }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $item->purchase_count }} pembelian</p>
+                        </div>
+                    </div>
+                    @endif
+                    @empty
+                    <p class="text-center text-gray-500 dark:text-gray-400 py-4">Tidak ada data pembelian</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -76,8 +158,10 @@
     <!-- Purchase Transactions Table -->
     <div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
         <div class="p-6 border-b border-border-light dark:border-border-dark flex justify-between items-center">
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Riwayat Transaksi Pembelian</h3>
-            <span class="text-sm text-gray-500 dark:text-gray-400">Klik baris untuk melihat detail</span>
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Riwayat Transaksi Pembelian</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Klik baris untuk melihat detail</p>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
@@ -132,6 +216,16 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        @if($purchases->hasPages())
+        <div class="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                Menampilkan {{ $purchases->firstItem() }} sampai {{ $purchases->lastItem() }} dari {{ $purchases->total() }} pembelian
+            </p>
+            {{ $purchases->appends(request()->query())->links() }}
+        </div>
+        @endif
     </div>
 
     <!-- Purchase Detail Modal -->
@@ -167,12 +261,88 @@
 
     <!-- Purchase Data (Hidden) -->
     <script>
-        window.purchasesData = @json($purchases);
+        window.purchasesData = @json($purchases->items());
     </script>
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Purchases Over Time Chart
+    const purchasesCtx = document.getElementById('purchasesChart').getContext('2d');
+
+    const purchasesLabels = @json($purchasesOverTime['labels'] ?? []);
+    const purchasesAmount = @json($purchasesOverTime['amount'] ?? []);
+    const purchasesCount = @json($purchasesOverTime['purchases'] ?? []);
+
+    new Chart(purchasesCtx, {
+        type: 'line',
+        data: {
+            labels: purchasesLabels,
+            datasets: [
+                {
+                    label: 'Nilai Pembelian',
+                    data: purchasesAmount,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Jumlah Transaksi',
+                    data: purchasesCount,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Nilai (Rp)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Transaksi'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        }
+    });
+
     function showPurchaseDetail(purchaseId) {
         const purchase = window.purchasesData.find(p => p.id === purchaseId);
         if (!purchase) return;

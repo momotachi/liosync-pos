@@ -5,16 +5,67 @@ namespace App\Http\Controllers;
 use App\Models\RawMaterial;
 use App\Models\StockTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AdminStockTransactionsController extends Controller
 {
+    private function authorizeStockAccess()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Cashier cannot access stock transactions
+        if (!$user || $user->isCashier()) {
+            abort(403, 'Access denied. Cashier cannot access stock transactions.');
+        }
+    }
+
+    /**
+     * Get the effective branch ID.
+     */
+    private function getEffectiveBranchId()
+    {
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
+
+        // Use authenticated user's branch
+        $user = Auth::user();
+        return $user ? $user->branch_id : null;
+    }
+
     /**
      * Display the stock transactions page.
      */
     public function index(Request $request)
     {
-        $query = StockTransaction::with(['rawMaterial', 'order']);
+        $this->authorizeStockAccess();
+
+        $branchId = $this->getEffectiveBranchId();
+
+        // Validate branch context - user must have a branch to view stock transactions
+        if (!$branchId) {
+            $user = Auth::user();
+            if ($user->isSuperAdmin()) {
+                return redirect()->route('superadmin.companies.index')
+                    ->with('info', 'Please select a company and branch to view stock transactions.');
+            } elseif ($user->isCompanyAdmin()) {
+                $companyId = session('company_id') ?? $user->company_id;
+                if ($companyId) {
+                    return redirect()->route('company.branches.index', $companyId)
+                        ->with('info', 'Please select a branch to view stock transactions.');
+                }
+                return redirect()->route('superadmin.companies.index')
+                    ->with('info', 'Please select a company first.');
+            } else {
+                abort(403, 'No branch assigned. Please contact administrator.');
+            }
+        }
+
+        $query = StockTransaction::with(['item', 'order'])
+            ->where('branch_id', $branchId);
 
         // Filter by raw material
         if ($request->has('material_id') && $request->material_id) {
@@ -61,7 +112,9 @@ class AdminStockTransactionsController extends Controller
      */
     private function getStats(Request $request)
     {
-        $query = StockTransaction::query();
+        $branchId = $this->getEffectiveBranchId();
+
+        $query = StockTransaction::where('branch_id', $branchId);
 
         // Apply same filters as main query
         if ($request->has('material_id') && $request->material_id) {
@@ -92,7 +145,9 @@ class AdminStockTransactionsController extends Controller
      */
     public function show($id)
     {
-        $transaction = StockTransaction::with(['rawMaterial', 'order'])
+        $this->authorizeStockAccess();
+
+        $transaction = StockTransaction::with(['item', 'order'])
             ->findOrFail($id);
 
         return view('admin.stock-transactions.show', compact('transaction'));
@@ -103,7 +158,12 @@ class AdminStockTransactionsController extends Controller
      */
     public function export(Request $request)
     {
-        $query = StockTransaction::with(['rawMaterial', 'order']);
+        $this->authorizeStockAccess();
+
+        $branchId = $this->getEffectiveBranchId();
+
+        $query = StockTransaction::with(['item', 'order'])
+            ->where('branch_id', $branchId);
 
         // Apply filters
         if ($request->has('material_id') && $request->material_id) {

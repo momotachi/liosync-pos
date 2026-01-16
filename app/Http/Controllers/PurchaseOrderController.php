@@ -12,21 +12,80 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseOrderController extends Controller
 {
+    private function authorizePurchaseAccess()
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        // Cashier cannot access purchase orders
+        if (!$user || $user->isCashier()) {
+            abort(403, 'Access denied. Cashier cannot access purchase orders.');
+        }
+    }
+
+    /**
+     * Get the effective branch ID for the current user.
+     */
+    private function getEffectiveBranchId()
+    {
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
+
+        // Use authenticated user's branch
+        $user = auth()->user();
+        return $user ? $user->branch_id : null;
+    }
+
     public function index()
     {
-        $categories = \App\Models\Category::all();
-        $items = Item::where('is_purchase', true)->where('is_active', true)->get()->map(function ($item) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'category_id' => $item->category_id,
-                'category_name' => $item->category->name ?? 'Uncategorized',
-                'image' => $item->image,
-                'purchase_price' => (float) ($item->hpp ?? 0),
-                'unit' => $item->unit ?? 'unit',
-                'current_stock' => (float) ($item->current_stock ?? 0),
-            ];
-        })->values();
+        $this->authorizePurchaseAccess();
+
+        $branchId = $this->getEffectiveBranchId();
+
+        // Validate branch context
+        if (!$branchId) {
+            $user = auth()->user();
+            if ($user->isSuperAdmin()) {
+                return redirect()->route('superadmin.companies.index')
+                    ->with('info', 'Please select a company and branch to access Purchase Orders.');
+            } elseif ($user->isCompanyAdmin()) {
+                $companyId = session('company_id') ?? $user->company_id;
+                if ($companyId) {
+                    return redirect()->route('company.branches.index', $companyId)
+                        ->with('info', 'Please select a branch to access Purchase Orders.');
+                }
+                return redirect()->route('superadmin.companies.index')
+                    ->with('info', 'Please select a company first.');
+            } else {
+                abort(403, 'No branch assigned. Please contact administrator.');
+            }
+        }
+
+        // Get categories that have purchase items in this branch
+        $categories = \App\Models\Category::whereHas('items', function ($query) use ($branchId) {
+            $query->where('is_purchase', true)->where('is_active', true)->where('branch_id', $branchId);
+        })->get();
+
+        // Get purchase items for this branch only
+        $items = Item::where('is_purchase', true)
+            ->where('is_active', true)
+            ->where('branch_id', $branchId)
+            ->with('category')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'category_id' => $item->category_id,
+                    'category_name' => $item->category->name ?? 'Uncategorized',
+                    'image' => $item->image,
+                    'purchase_price' => (float) ($item->unit_price ?? $item->hpp ?? 0),
+                    'unit' => $item->unit ?? 'unit',
+                    'current_stock' => (float) ($item->current_stock ?? 0),
+                ];
+            })->values();
 
         // Get settings for Purchase Order
         $settings = [
@@ -44,6 +103,23 @@ class PurchaseOrderController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizePurchaseAccess();
+
+        // Check subscription for non-superadmin users
+        $user = auth()->user();
+        $branchId = $this->getEffectiveBranchId();
+
+        if (!$user->isSuperAdmin() && $branchId) {
+            $branch = \App\Models\Branch::find($branchId);
+            if ($branch && !$branch->hasActiveSubscription()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Langganan cabang ini telah habis. Silakan perpanjang untuk melanjutkan pembelian.',
+                    'redirect' => route('subscription.index')
+                ], 403);
+            }
+        }
+
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:items,id',
@@ -59,9 +135,23 @@ class PurchaseOrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Get branch and company context
+            $branchId = $this->getEffectiveBranchId();
+            $companyId = session('company_id') ?? Auth::user()->company_id;
+
+            // Validate branch context
+            if (!$branchId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No branch context. Please select a branch first.'
+                ], 403);
+            }
+
             // Create Purchase
             $purchase = Purchase::create([
                 'user_id' => Auth::id(),
+                'company_id' => $companyId,
+                'branch_id' => $branchId,
                 'supplier_name' => $request->supplier_name ?? 'General Supplier',
                 'supplier_phone' => $request->supplier_phone,
                 'total_amount' => $request->total_amount,
@@ -72,13 +162,23 @@ class PurchaseOrderController extends Controller
 
             foreach ($request->items as $item) {
                 $material = Item::find($item['item_id']);
+
+                // Verify material belongs to the same branch
+                if ($material->branch_id != $branchId) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Material {$material->name} does not belong to this branch."
+                    ], 403);
+                }
+
                 $subtotal = ($item['price'] ?? 0) * $item['quantity'];
 
                 // Create Purchase Item
                 $purchase->items()->create([
                     'item_id' => $material->id,
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'] ?? $material->hpp,
+                    'price' => $item['price'] ?? $material->unit_price ?? $material->hpp,
                     'subtotal' => $subtotal,
                     'note' => $item['note'] ?? null,
                 ]);
@@ -91,6 +191,7 @@ class PurchaseOrderController extends Controller
                     'description' => "Purchased in PO #{$purchase->id}" .
                         ($request->supplier_name ? " from {$request->supplier_name}" : ''),
                     'reference_id' => $purchase->id,
+                    'branch_id' => $branchId,
                 ]);
 
                 // Update current stock
@@ -120,6 +221,8 @@ class PurchaseOrderController extends Controller
      */
     public function receipt($id)
     {
+        $this->authorizePurchaseAccess();
+
         $purchase = Purchase::with(['items.item', 'user'])->findOrFail($id);
 
         // Get settings for receipt

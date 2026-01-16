@@ -69,8 +69,8 @@
                             <select name="category_id" id="category_id"
                                 class="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                                 <option value="">No Category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                @foreach($allCategories as $category)
+                                    <option value="{{ $category->id }}" data-type="{{ $category->type }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
@@ -264,6 +264,35 @@
     const items = @json($items);
     let recipeCount = 0;
 
+    function filterCategoryDropdown() {
+        const purchaseCheckbox = document.querySelector('input[name="is_purchase"]');
+        const salesCheckbox = document.querySelector('input[name="is_sales"]');
+        const categorySelect = document.getElementById('category_id');
+        const currentValue = categorySelect.value;
+
+        // Show/hide options based on checkbox state
+        const options = categorySelect.querySelectorAll('option[data-type]');
+        options.forEach(option => {
+            const categoryType = option.getAttribute('data-type');
+            let shouldShow = false;
+
+            if (purchaseCheckbox.checked && categoryType === 'material') {
+                shouldShow = true;
+            }
+            if (salesCheckbox.checked && categoryType === 'product') {
+                shouldShow = true;
+            }
+
+            option.style.display = shouldShow ? '' : 'none';
+        });
+
+        // If currently selected category is now hidden, clear selection
+        const selectedOption = categorySelect.querySelector(`option[value="${currentValue}"]`);
+        if (selectedOption && selectedOption.style.display === 'none') {
+            categorySelect.value = '';
+        }
+    }
+
     function togglePurchaseFields() {
         const checkbox = document.querySelector('input[name="is_purchase"]');
         const fields = document.getElementById('purchaseFields');
@@ -272,6 +301,7 @@
         } else {
             fields.classList.add('hidden');
         }
+        filterCategoryDropdown();
     }
 
     function toggleSalesFields() {
@@ -285,6 +315,7 @@
             salesFields.classList.add('hidden');
             recipeFields.classList.add('hidden');
         }
+        filterCategoryDropdown();
     }
 
     // Handle custom unit dropdown
@@ -396,6 +427,9 @@
         addRecipeRow();
         updateHppAndProfit();
     }
+
+    // Initial category filter based on checkbox state
+    filterCategoryDropdown();
 </script>
 
 <!-- Category Modal -->
@@ -441,6 +475,20 @@
 
 <script>
     function openCategoryModal() {
+        const purchaseCheckbox = document.querySelector('input[name="is_purchase"]');
+        const salesCheckbox = document.querySelector('input[name="is_sales"]');
+        const typeSelect = document.getElementById('category_type');
+
+        // Auto-select category type based on checkbox state
+        if (purchaseCheckbox.checked && !salesCheckbox.checked) {
+            typeSelect.value = 'material';
+        } else if (salesCheckbox.checked && !purchaseCheckbox.checked) {
+            typeSelect.value = 'product';
+        } else {
+            // Both checked or neither checked, default to product
+            typeSelect.value = 'product';
+        }
+
         document.getElementById('categoryModal').classList.remove('hidden');
         document.getElementById('categoryModal').classList.add('flex');
         document.getElementById('category_name').focus();
@@ -477,6 +525,7 @@
                 const option = document.createElement('option');
                 option.value = data.category.id;
                 option.textContent = data.category.name;
+                option.setAttribute('data-type', data.category.type);
                 option.selected = true;
                 select.appendChild(option);
 

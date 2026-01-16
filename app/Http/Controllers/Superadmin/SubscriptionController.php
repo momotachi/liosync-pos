@@ -22,7 +22,15 @@ class SubscriptionController extends Controller
 
         // Filter by status
         if ($status) {
-            $query->where('status', $status);
+            // Special handling for 'pending' - filter subscriptions with pending payments
+            if ($status === 'pending') {
+                $query->whereHas('payments', function ($q) {
+                    $q->where('status', 'pending');
+                });
+            } else {
+                // For other statuses, filter by subscription status
+                $query->where('status', $status);
+            }
         }
 
         // Filter by company
@@ -132,5 +140,48 @@ class SubscriptionController extends Controller
 
         return redirect()->route('superadmin.subscriptions.show', $subscription)
             ->with('success', 'Subscription status updated successfully!');
+    }
+
+    /**
+     * Adjust subscription period (add/remove months or days).
+     */
+    public function adjustPeriod(Request $request, BranchSubscription $subscription)
+    {
+        $validated = $request->validate([
+            'months' => 'nullable|integer|min:-12|max:12',
+            'days' => 'nullable|integer|min:-30|max:30',
+        ]);
+
+        $months = (int) ($validated['months'] ?? 0);
+        $days = (int) ($validated['days'] ?? 0);
+
+        // Adjust the end date - clone to avoid modifying original
+        $currentEndDate = $subscription->end_date ? \Carbon\Carbon::parse($subscription->end_date) : now();
+        $subscription->end_date = $currentEndDate->copy()->addMonths($months)->addDays($days);
+        $subscription->save();
+
+        // Auto-activate if was expired and we're adding time
+        if (($months > 0 || $days > 0) && $subscription->status === 'expired') {
+            $subscription->status = 'active';
+            $subscription->save();
+        }
+
+        // Build success message
+        $messageParts = [];
+        if ($months !== 0) {
+            $messageParts[] = $months > 0
+                ? "{$months} month(s) added"
+                : abs($months) . " month(s) reduced";
+        }
+        if ($days !== 0) {
+            $messageParts[] = $days > 0
+                ? "{$days} day(s) added"
+                : abs($days) . " day(s) reduced";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully ' . implode(' and ', $messageParts) . ' to subscription.'
+        ]);
     }
 }

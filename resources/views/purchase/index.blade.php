@@ -6,6 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Purchase Order - Cycle</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/cycle-logo.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link
@@ -45,16 +46,17 @@
 
     <!-- Top Navigation -->
     <header
-        class="flex-none h-16 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-emerald-900 px-6 flex items-center justify-between z-20 shadow-sm">
-        <a href="/branch" class="flex items-center gap-4 hover:opacity-80 transition-opacity" title="Go to Dashboard">
-            <div class="size-8 text-primary flex items-center justify-center">
-                <span class="material-symbols-outlined text-4xl">shopping_cart</span>
+        class="flex-none h-14 md:h-16 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-emerald-900 px-3 md:px-6 flex items-center justify-between z-20 shadow-sm">
+        <a href="/branch" class="flex items-center gap-2 md:gap-4 hover:opacity-80 transition-opacity"
+            title="Go to Dashboard">
+            <div class="size-7 md:size-8 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl md:text-4xl">shopping_cart</span>
             </div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Purchase Order</h1>
+            <h1 class="text-lg md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Purchase</h1>
         </a>
-        <!-- Search Bar -->
-        <div class="flex-1 max-w-xl px-8">
-            <div class="relative group">
+        <!-- Search Bar - Hidden on mobile -->
+        <div class="hidden md:flex flex-1 max-w-xl px-8">
+            <div class="relative group w-full">
                 <div
                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                     <span class="material-symbols-outlined">search</span>
@@ -64,9 +66,21 @@
                     placeholder="Search material name or code..." type="text" />
             </div>
         </div>
+        <!-- Mobile Search Button -->
+        <button @click="showMobileSearch = !showMobileSearch"
+            class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100">
+            <span class="material-symbols-outlined">search</span>
+        </button>
         <!-- Right Actions -->
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 mr-4">
+        <div class="flex items-center gap-2 md:gap-4">
+            <div class="hidden sm:flex items-center gap-2 mr-2 md:mr-4">
+                <!-- Sidebar Toggle Button (Desktop) -->
+                <button @click="showSidebar = !showSidebar"
+                    class="hidden lg:flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 transition-colors"
+                    :title="showSidebar ? 'Hide Cart Panel' : 'Show Cart Panel'">
+                    <span class="material-symbols-outlined"
+                        x-text="showSidebar ? 'right_panel_close' : 'right_panel_open'"></span>
+                </button>
                 <button
                     class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100"
                     title="Network Status">
@@ -87,26 +101,86 @@
         </div>
     </header>
 
+    <!-- Mobile Search Bar (toggle on mobile) -->
+    <div x-show="showMobileSearch" x-transition
+        class="md:hidden bg-surface-light dark:bg-surface-dark px-3 py-2 border-b border-slate-200 dark:border-emerald-900">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <span class="material-symbols-outlined">search</span>
+            </div>
+            <input x-model="search"
+                class="block w-full pl-10 pr-3 py-2 border-none rounded-xl bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary"
+                placeholder="Search material..." type="text" />
+        </div>
+    </div>
+
+    {{-- Subscription Expired Warning Banner --}}
+    @php
+        $hasActiveSubscription = true;
+        if(Auth::check() && !Auth::user()->isSuperAdmin()) {
+            $branchId = session('active_branch_id') ?? Auth::user()->branch_id;
+            if($branchId) {
+                $branch = \App\Models\Branch::find($branchId);
+                $hasActiveSubscription = $branch ? $branch->hasActiveSubscription() : true;
+            }
+        }
+    @endphp
+    @if(Auth::check() && !$hasActiveSubscription && !Auth::user()->isSuperAdmin())
+    <div x-data="{ show: true }" x-show="show"
+        class="bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg"
+        role="alert">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-2xl">warning</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm">
+                            Langganan Telah Habis - Mode Read-Only
+                        </p>
+                        <p class="text-xs text-red-100">
+                            Transaksi dinonaktifkan. Silakan perpanjang langganan untuk melanjutkan.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('subscription.index') }}"
+                        class="inline-flex items-center px-4 py-2 bg-white text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors shadow-sm">
+                        <span class="material-symbols-outlined mr-1 text-sm">payments</span>
+                        Perpanjang
+                    </a>
+                    <button @click="show = false"
+                        class="p-1.5 rounded-lg hover:bg-red-400 text-white transition-colors"
+                        title="Tutup">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-0">
         <!-- LEFT PANEL: Catalog (70%) -->
         <section
             class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark p-4 lg:p-6 lg:pr-3 overflow-hidden">
-            <!-- Category Tabs -->
-            <div class="flex-none mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                <div class="flex gap-3">
+            <!-- Category Tabs - Improved for touch -->
+            <div class="flex-none mb-4 md:mb-6 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                <div class="flex gap-2 md:gap-3">
                     <button @click="filterCategory(null)"
                         :class="activeCategory === null ? 'bg-primary text-white hover:shadow-lg' : 'bg-white dark:bg-emerald-900/40 text-slate-700 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-800'"
-                        class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-md transition-all transform hover:-translate-y-0.5">
-                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
-                        All Materials
+                        class="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold shadow-md transition-all transform hover:-translate-y-0.5 whitespace-nowrap text-sm md:text-base">
+                        <span class="material-symbols-outlined text-[18px] md:text-[20px]">grid_view</span>
+                        <span class="hidden sm:inline">All Materials</span>
+                        <span class="sm:hidden">All</span>
                     </button>
                     @foreach($categories as $category)
                         @if($items->contains('category_id', $category->id))
                             <button @click="filterCategory({{ $category->id }})"
                                 :class="activeCategory === {{ $category->id }} ? 'bg-primary text-white hover:shadow-lg' : 'bg-white dark:bg-emerald-900/40 text-slate-700 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-800'"
-                                class="flex items-center gap-2 px-6 py-3 rounded-xl font-medium shadow-sm border border-slate-200 dark:border-emerald-800 transition-colors">
-                                <span class="material-symbols-outlined text-[20px] text-accent">inventory_2</span>
+                                class="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-medium shadow-sm border border-slate-200 dark:border-emerald-800 transition-colors whitespace-nowrap text-sm md:text-base">
+                                <span
+                                    class="material-symbols-outlined text-[18px] md:text-[20px] text-accent">inventory_2</span>
                                 {{ $category->name }}
                             </button>
                         @endif
@@ -114,40 +188,43 @@
                 </div>
             </div>
 
-            <!-- Material Grid -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
+            <!-- Material Grid - Responsive with better mobile layout -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 md:pr-2 pb-24 lg:pb-4">
+                <div
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
 
                     @foreach($items as $item)
-                        <!-- Card -->
+                        <!-- Material Card - Compact for mobile -->
                         <div x-show="isVisible({{ $item['category_id'] }}, '{{ addslashes($item['name']) }}')"
                             @click="addToCart({{ json_encode($item) }})"
                             x-transition:enter="transition ease-out duration-300"
                             x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
-                            class="group bg-surface-light dark:bg-surface-dark rounded-2xl p-3 shadow-sm hover:shadow-md border border-slate-100 dark:border-emerald-900/50 cursor-pointer transition-all hover:border-primary/50 relative overflow-hidden">
+                            class="group bg-surface-light dark:bg-surface-dark rounded-xl md:rounded-2xl p-2 md:p-3 shadow-sm hover:shadow-md border border-slate-100 dark:border-emerald-900/50 cursor-pointer transition-all hover:border-primary/50 relative overflow-hidden active:scale-95">
                             <div
-                                class="aspect-square rounded-xl bg-emerald-50/50 dark:bg-emerald-900/20 mb-3 overflow-hidden relative">
+                                class="aspect-square rounded-lg md:rounded-xl bg-emerald-50/50 dark:bg-emerald-900/20 mb-2 md:mb-3 overflow-hidden relative">
                                 @if($item['image'])
                                     <img class="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
                                         src="{{ asset('storage/' . $item['image']) }}" alt="{{ $item['name'] }}" />
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                                    <div class="w-full h-full flex items-center justify-center text-3xl md:text-4xl">📦</div>
                                 @endif
 
                                 <div
-                                    class="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
+                                    class="absolute top-1 right-1 md:top-2 md:right-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-md md:rounded-lg px-1.5 md:px-2 py-0.5 md:py-1 shadow-sm">
                                     <span
-                                        class="text-sm font-bold text-slate-900 dark:text-white">{{ $settings['currency_symbol'] ?? 'Rp' }} {{ number_format($item['purchase_price'], 0, ',', '.') }}</span>
+                                        class="text-xs md:text-sm font-bold text-slate-900 dark:text-white">{{ $settings['currency_symbol'] ?? 'Rp' }}
+                                        {{ number_format($item['purchase_price'], 0, ',', '.') }}</span>
                                 </div>
                             </div>
-                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight mb-1">
+                            <h3
+                                class="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-lg leading-tight mb-0.5 md:mb-1 line-clamp-2">
                                 {{ $item['name'] }}
                             </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
                                 {{ $item['category_name'] ?? 'Material' }}
                             </p>
-                            <p class="text-xs text-primary dark:text-emerald-400 mt-1">
-                                Stock: {{ number_format($item['current_stock'], 2, ',', '.') }} {{ $item['unit'] }}
+                            <p class="text-xs text-primary dark:text-emerald-400 mt-0.5 md:mt-1">
+                                Stock: {{ number_format($item['current_stock'], 2, ',', '.') }}
                             </p>
                         </div>
                     @endforeach
@@ -160,18 +237,47 @@
             </div>
         </section>
 
-        <!-- RIGHT PANEL: Current Purchase Order (30%) -->
-        <aside
-            class="flex-3 bg-surface-light dark:bg-surface-dark border-l border-slate-200 dark:border-emerald-900/50 flex flex-col shadow-xl max-w-112.5">
-            <!-- Header -->
-            <div class="flex-none p-5 border-b border-slate-100 dark:border-emerald-900/50">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <!-- RIGHT PANEL: Current Purchase Order - Slide-up drawer on mobile, sidebar on desktop -->
+        <!-- Mobile Cart Overlay -->
+        <div x-show="showMobileCart" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" @click="showMobileCart = false"
+            class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
+
+        <aside x-show="showMobileCart || (!isMobileView && showSidebar)"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-y-full lg:translate-x-full lg:translate-y-0"
+            x-transition:enter-end="translate-y-0 lg:translate-x-0" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0 lg:translate-x-0"
+            x-transition:leave-end="translate-y-full lg:translate-x-full lg:translate-y-0" class="fixed lg:relative bottom-0 left-0 right-0 lg:left-auto lg:right-auto lg:bottom-auto
+                   max-h-[85vh] lg:max-h-none lg:h-full
+                   w-full lg:w-80 xl:w-96 lg:max-w-[30rem]
+                   bg-surface-light dark:bg-surface-dark 
+                   border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-emerald-900/50 
+                   flex flex-col shadow-2xl lg:shadow-xl z-50 lg:z-auto
+                   rounded-t-3xl lg:rounded-none">
+            <!-- Mobile Drawer Handle -->
+            <div class="lg:hidden flex justify-center pt-3 pb-1">
+                <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+            </div>
+
+            <!-- Header with close button for mobile -->
+            <div class="flex-none p-4 lg:p-5 border-b border-slate-100 dark:border-emerald-900/50">
+                <div class="flex justify-between items-center mb-3 lg:mb-4">
+                    <h2 class="text-lg lg:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">shopping_cart</span>
                         PO #NEW
                     </h2>
-                    <span
-                        class="px-2.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900 text-primary dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">Purchase</span>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900 text-primary dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">Purchase</span>
+                        <!-- Close button for mobile -->
+                        <button @click="showMobileCart = false"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-500">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="flex gap-2">
                     <button @click="showSupplierModal = true"
@@ -275,6 +381,24 @@
         </aside>
     </main>
 
+    <!-- Mobile Floating Cart Button -->
+    <button x-show="isMobileView && !showMobileCart" @click="showMobileCart = true"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100" class="lg:hidden fixed bottom-6 right-6 z-30 
+               w-16 h-16 rounded-full bg-primary text-white 
+               shadow-2xl shadow-primary/40 
+               flex items-center justify-center
+               hover:bg-primary-hover active:scale-95
+               transition-all duration-200">
+        <span class="material-symbols-outlined text-3xl">shopping_cart</span>
+        <!-- Cart Badge -->
+        <span x-show="cart.length > 0" class="absolute -top-1 -right-1 
+                   min-w-[24px] h-6 px-1.5
+                   bg-accent text-white text-xs font-bold 
+                   rounded-full flex items-center justify-center
+                   shadow-lg animate-pulse" x-text="cart.reduce((sum, item) => sum + 1, 0)"></span>
+    </button>
+
     <div x-data="toast()" @toast-add.window="add($event.detail.message, $event.detail.type)"
         class="fixed bottom-5 right-5 z-50 flex flex-col gap-2">
         <template x-for="notif in notifications" :key="notif.id">
@@ -297,12 +421,9 @@
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <!-- Modal Container - Centered with fixed width -->
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showPaymentModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showPaymentModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -375,12 +496,9 @@
     <div x-show="showSupplierModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showSupplierModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showSupplierModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -423,12 +541,9 @@
     <div x-show="showNoteModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showNoteModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showNoteModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -441,7 +556,8 @@
             <!-- Modal Body -->
             <div class="p-5 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Note for this purchase</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Note for this
+                        purchase</label>
                     <textarea x-model="poNote" rows="4"
                         class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-black/20 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary resize-none"
                         placeholder="Add a note (e.g., delivery instructions, quality requirements, etc.)"></textarea>
@@ -465,12 +581,9 @@
     <div x-show="showItemModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-sm bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showItemModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showItemModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -484,17 +597,21 @@
             <div class="p-5 space-y-4">
                 <!-- Item Name -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Item</label>
+                    <label
+                        class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Item</label>
                     <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-emerald-900/30 flex items-center justify-center">
-                            <span class="material-symbols-outlined text-primary dark:text-emerald-400">inventory_2</span>
+                        <div
+                            class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-emerald-900/30 flex items-center justify-center">
+                            <span
+                                class="material-symbols-outlined text-primary dark:text-emerald-400">inventory_2</span>
                         </div>
                         <span class="font-medium text-gray-900 dark:text-white" x-text="currentItem?.name || ''"></span>
                     </div>
                 </div>
                 <!-- Quantity -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Quantity</label>
+                    <label
+                        class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Quantity</label>
                     <div class="relative">
                         <input x-model="itemQty" type="number" step="0.01" min="0.01"
                             class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary"
@@ -503,7 +620,8 @@
                 </div>
                 <!-- Total Cost -->
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Total Cost</label>
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1.5">Total
+                        Cost</label>
                     <div class="relative">
                         <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
                             <span class="text-gray-400 text-sm font-medium" x-text="currencySymbol"></span>
@@ -557,6 +675,14 @@
                 search: '',
                 isLoading: false,
 
+                // Mobile Responsive State
+                showMobileCart: false,
+                showMobileSearch: false,
+                isMobileView: window.innerWidth < 1024,
+
+                // Sidebar Toggle State (Desktop)
+                showSidebar: true,
+
                 // Settings
                 settings: settings,
                 currencySymbol: settings.currency_symbol || 'Rp',
@@ -583,6 +709,17 @@
 
                 init() {
                     console.log('Purchase Order initialized');
+
+                    // Handle window resize for responsive behavior
+                    const handleResize = () => {
+                        this.isMobileView = window.innerWidth < 1024;
+                        // Auto-hide mobile drawers when switching to desktop
+                        if (!this.isMobileView) {
+                            this.showMobileCart = false;
+                            this.showMobileSearch = false;
+                        }
+                    };
+                    window.addEventListener('resize', handleResize);
                 },
 
                 get total() {

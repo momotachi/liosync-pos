@@ -27,6 +27,81 @@ class Branch extends Model
     ];
 
     /**
+     * Get the subscription-based status for the branch.
+     * Returns active if subscription is valid, inactive if expired.
+     */
+    public function getSubscriptionStatusAttribute(): bool
+    {
+        // If there's no subscription, use the original is_active field
+        if (!$this->currentSubscription) {
+            return $this->attributes['is_active'] ?? false;
+        }
+
+        // Check if subscription is active and not expired
+        $subscription = $this->currentSubscription;
+
+        // Subscription is active only if:
+        // 1. Status is 'active'
+        // 2. End date is today or in the future (>= today)
+        if ($subscription->status === 'active' &&
+            $subscription->end_date &&
+            $subscription->end_date->gte(now()->startOfDay())) {
+            return true;
+        }
+
+        // Subscription is expired or inactive
+        return false;
+    }
+
+    /**
+     * Get the subscription status text with date info.
+     */
+    public function getSubscriptionStatusTextAttribute(): string
+    {
+        if (!$this->currentSubscription) {
+            return $this->is_active ? 'Active' : 'Inactive';
+        }
+
+        $subscription = $this->currentSubscription;
+
+        // Check if subscription is expired (before today)
+        if ($subscription->end_date && $subscription->end_date->lt(now()->startOfDay())) {
+            return 'Expired';
+        }
+
+        // Check subscription status
+        if ($subscription->status === 'active') {
+            return 'Active';
+        }
+
+        return 'Inactive';
+    }
+
+    /**
+     * Get the subscription status color class.
+     */
+    public function getSubscriptionStatusColorAttribute(): string
+    {
+        if (!$this->currentSubscription) {
+            return $this->is_active ? 'emerald' : 'red';
+        }
+
+        $subscription = $this->currentSubscription;
+
+        // Check if subscription is expired (before today)
+        if ($subscription->end_date && $subscription->end_date->lt(now()->startOfDay())) {
+            return 'red';
+        }
+
+        // Check subscription status
+        if ($subscription->status === 'active') {
+            return 'emerald';
+        }
+
+        return 'red';
+    }
+
+    /**
      * Get the company that owns the branch.
      */
     public function company()
@@ -117,7 +192,8 @@ class Branch extends Model
     {
         return $this->currentSubscription &&
                $this->currentSubscription->status === 'active' &&
-               $this->currentSubscription->end_date->isFuture();
+               $this->currentSubscription->end_date &&
+               $this->currentSubscription->end_date->gte(now()->startOfDay());
     }
 
     /**
@@ -133,6 +209,6 @@ class Branch extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return "{$this->company->name} - {$this->name}";
+        return ($this->company?->name ?? 'Unknown Company') . " - {$this->name}";
     }
 }

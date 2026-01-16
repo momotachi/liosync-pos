@@ -94,13 +94,18 @@ class BranchSubscription extends Model
 
     /**
      * Get remaining days until expiration.
+     * Counts from tomorrow (excluding today) until end date.
      */
     public function getRemainingDaysAttribute(): int
     {
         if (!$this->end_date) {
             return 0;
         }
-        return max(0, now()->diffInDays($this->end_date, false));
+
+        // Get the difference in days, not counting today
+        $daysRemaining = now()->startOfDay()->diffInDays($this->end_date->startOfDay(), false);
+
+        return max(0, $daysRemaining);
     }
 
     /**

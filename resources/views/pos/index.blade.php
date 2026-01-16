@@ -6,6 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Cycle Cashier Dashboard</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/cycle-logo.png') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
         rel="stylesheet" />
     <link
@@ -45,16 +46,17 @@
 
     <!-- Top Navigation -->
     <header
-        class="flex-none h-16 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-emerald-900 px-6 flex items-center justify-between z-20 shadow-sm">
-        <a href="/branch" class="flex items-center gap-4 hover:opacity-80 transition-opacity" title="Go to Dashboard">
-            <div class="size-8 text-primary flex items-center justify-center">
-                <span class="material-symbols-outlined text-4xl">local_cafe</span>
+        class="flex-none h-14 md:h-16 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-emerald-900 px-3 md:px-6 flex items-center justify-between z-20 shadow-sm">
+        <a href="/branch" class="flex items-center gap-2 md:gap-4 hover:opacity-80 transition-opacity"
+            title="Go to Dashboard">
+            <div class="size-7 md:size-8 text-primary flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl md:text-4xl">local_cafe</span>
             </div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">JuicePOS</h1>
+            <h1 class="text-lg md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">JuicePOS</h1>
         </a>
-        <!-- Search Bar -->
-        <div class="flex-1 max-w-xl px-8">
-            <div class="relative group">
+        <!-- Search Bar - Hidden on mobile -->
+        <div class="hidden md:flex flex-1 max-w-xl px-8">
+            <div class="relative group w-full">
                 <div
                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
                     <span class="material-symbols-outlined">search</span>
@@ -64,20 +66,32 @@
                     placeholder="Search item name or code (Alt+S)..." type="text" />
             </div>
         </div>
-        <!-- Barcode Scanner -->
-        <div class="flex items-center gap-2">
-            <button @click="$refs.barcodeInput.focus()" class="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors" title="Scan Barcode (F2)">
+        <!-- Barcode Scanner - Hidden on mobile -->
+        <div class="hidden md:flex items-center gap-2">
+            <button @click="$refs.barcodeInput.focus()"
+                class="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+                title="Scan Barcode (F2)">
                 <span class="material-symbols-outlined">qr_code_scanner</span>
             </button>
-            <input x-ref="barcodeInput"
-                x-model="barcodeScan"
-                @keyup.enter="scanBarcode()"
+            <input x-ref="barcodeInput" x-model="barcodeScan" @keyup.enter="scanBarcode()"
                 class="w-32 px-3 py-2 border-none rounded-lg bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary text-sm font-medium"
                 placeholder="Barcode (F2)">
         </div>
+        <!-- Mobile Search Button -->
+        <button @click="showMobileSearch = !showMobileSearch"
+            class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100">
+            <span class="material-symbols-outlined">search</span>
+        </button>
         <!-- Right Actions -->
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 mr-4">
+        <div class="flex items-center gap-2 md:gap-4">
+            <div class="hidden sm:flex items-center gap-2 mr-2 md:mr-4">
+                <!-- Sidebar Toggle Button (Desktop) -->
+                <button @click="showSidebar = !showSidebar"
+                    class="hidden lg:flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 transition-colors"
+                    :title="showSidebar ? 'Hide Cart Panel' : 'Show Cart Panel'">
+                    <span class="material-symbols-outlined"
+                        x-text="showSidebar ? 'right_panel_close' : 'right_panel_open'"></span>
+                </button>
                 <button
                     class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 relative"
                     title="Notifications">
@@ -91,9 +105,12 @@
                     <span class="material-symbols-outlined text-primary">wifi</span>
                 </button>
             </div>
-            <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-emerald-800" x-data="{ open: false }" style="position: relative; z-index: 50;">
+            <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-emerald-800"
+                x-data="{ open: false }" style="position: relative; z-index: 50;">
                 <div class="text-right hidden sm:block">
-                    <p class="text-sm font-bold leading-none text-slate-900 dark:text-white">{{ Auth::check() ? Auth::user()->name : 'Guest' }}</p>
+                    <p class="text-sm font-bold leading-none text-slate-900 dark:text-white">
+                        {{ Auth::check() ? Auth::user()->name : 'Guest' }}
+                    </p>
                     <p class="text-xs text-slate-500 dark:text-emerald-300 mt-1">Cashier</p>
                 </div>
                 <div class="relative">
@@ -103,25 +120,29 @@
                             src="https://ui-avatars.com/api/?name={{ Auth::check() ? Auth::user()->name : 'Guest' }}&background=05945b&color=fff" />
                     </button>
                     <!-- Dropdown Menu -->
-                    <div x-show="open"
-                        x-transition:enter="transition ease-out duration-200"
+                    <div x-show="open" x-transition:enter="transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 scale-95 translate-y-[-10px]"
                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 scale-95 translate-y-[-10px]"
-                        @click.outside="open = false"
+                        x-transition:leave-end="opacity-0 scale-95 translate-y-[-10px]" @click.outside="open = false"
                         class="absolute right-0 mt-3 w-56 min-w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-slate-200 dark:border-gray-700 py-2"
                         style="display: none; right: -8px;">
                         <!-- User Info Section -->
-                        <div class="px-4 py-3 border-b border-slate-100 dark:border-gray-700 bg-gradient-to-r from-slate-50 to-white dark:from-gray-700/50 dark:to-gray-800">
+                        <div
+                            class="px-4 py-3 border-b border-slate-100 dark:border-gray-700 bg-gradient-to-r from-slate-50 to-white dark:from-gray-700/50 dark:to-gray-800">
                             <div class="flex flex-col items-center gap-2 text-center">
-                                <div class="size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow">
+                                <div
+                                    class="size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow">
                                     {{ substr(Auth::check() ? Auth::user()->name : 'G', 0, 1) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ Auth::check() ? Auth::user()->name : 'Guest' }}</p>
-                                    <p class="text-xs text-slate-500 dark:text-gray-400 truncate">{{ Auth::check() ? Auth::user()->email : '' }}</p>
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                        {{ Auth::check() ? Auth::user()->name : 'Guest' }}
+                                    </p>
+                                    <p class="text-xs text-slate-500 dark:text-gray-400 truncate">
+                                        {{ Auth::check() ? Auth::user()->email : '' }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -133,7 +154,8 @@
                                 @csrf
                                 <button type="submit"
                                     class="w-full text-center px-4 py-2.5 mx-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 rounded-lg flex items-center justify-center gap-3 group">
-                                    <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">logout</span>
+                                    <span
+                                        class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform duration-200">logout</span>
                                     <span class="font-medium">Logout</span>
                                 </button>
                             </form>
@@ -144,16 +166,84 @@
         </div>
     </header>
 
+    <!-- Mobile Search Bar (toggle on mobile) -->
+    <div x-show="showMobileSearch" x-transition
+        class="md:hidden bg-surface-light dark:bg-surface-dark px-3 py-2 border-b border-slate-200 dark:border-emerald-900">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <span class="material-symbols-outlined">search</span>
+            </div>
+            <input x-model="search"
+                class="block w-full pl-10 pr-3 py-2 border-none rounded-xl bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary"
+                placeholder="Search item..." type="text" />
+        </div>
+    </div>
+
+    {{-- Subscription Expired Warning Banner --}}
+    @php
+        $hasActiveSubscription = true;
+        if(Auth::check() && !Auth::user()->isSuperAdmin()) {
+            $branchId = session('active_branch_id') ?? Auth::user()->branch_id;
+            if($branchId) {
+                $branch = \App\Models\Branch::find($branchId);
+                $hasActiveSubscription = $branch ? $branch->hasActiveSubscription() : true;
+            }
+        }
+        $isCashier = Auth::check() && Auth::user()->isCashier();
+    @endphp
+    @if(Auth::check() && !$hasActiveSubscription && !Auth::user()->isSuperAdmin())
+    <div x-data="{ show: true }" x-show="show"
+        class="bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg"
+        role="alert">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex items-center justify-between flex-wrap">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-2xl">warning</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm">
+                            Langganan Telah Habis
+                        </p>
+                        <p class="text-xs text-red-100">
+                            @if($isCashier)
+                                Transaksi dinonaktifkan. Silakan hubungi admin untuk perpanjangan.
+                            @else
+                                Transaksi dinonaktifkan. Silakan perpanjang langganan untuk melanjutkan.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    @if(!$isCashier)
+                    <a href="{{ route('subscription.index') }}"
+                        class="inline-flex items-center px-4 py-2 bg-white text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-colors shadow-sm">
+                        <span class="material-symbols-outlined mr-1 text-sm">payments</span>
+                        Perpanjang
+                    </a>
+                    @endif
+                    <button @click="show = false"
+                        class="p-1.5 rounded-lg hover:bg-red-400 text-white transition-colors"
+                        title="Tutup">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative z-0">
-        <!-- Pending Orders Panel (Resto Only) -->
-        <div x-show="companyType === 'resto'" x-transition.opacity.duration.300ms class="flex-none w-80 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-emerald-900/50 p-4 overflow-y-auto custom-scrollbar lg:block">
+        <!-- Pending Orders Panel (Resto Only) - Hidden on mobile/tablet -->
+        <div x-show="companyType === 'resto' && !isMobileView" x-transition.opacity.duration.300ms
+            class="hidden lg:flex flex-none w-72 xl:w-80 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-emerald-900/50 p-4 overflow-y-auto custom-scrollbar flex-col">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">receipt_long</span>
                     Pending Orders
                 </h2>
-                <button @click="loadPendingOrders()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 transition-colors" title="Refresh">
+                <button @click="loadPendingOrders()"
+                    class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 transition-colors"
+                    title="Refresh">
                     <span class="material-symbols-outlined">refresh</span>
                 </button>
             </div>
@@ -162,13 +252,12 @@
             <div class="space-y-3">
                 <template x-for="order in pendingOrders" :key="order.id">
                     <div class="p-3 bg-white dark:bg-emerald-900/20 rounded-xl border border-slate-200 dark:border-emerald-800 hover:border-primary dark:hover:border-primary/50 transition-colors cursor-pointer"
-                         @click="openPaymentModal(order)">
+                        @click="openPaymentModal(order)">
                         <!-- Order Header -->
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-primary" x-text="'#' + order.id"></span>
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                                    :class="{
+                                <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="{
                                         'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400': order.order_type === 'dine_in',
                                         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': order.order_type === 'takeaway',
                                         'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': order.order_type === 'direct'
@@ -176,13 +265,15 @@
                                     x-text="order.order_type === 'dine_in' ? 'Dine In' : (order.order_type === 'takeaway' ? 'Takeaway' : 'Direct')">
                                 </span>
                             </div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400" x-text="new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })"></span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400"
+                                x-text="new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })"></span>
                         </div>
 
                         <!-- Cashier Name -->
                         <div class="flex items-center gap-1 mb-2">
                             <span class="material-symbols-outlined text-[12px] text-gray-400">person</span>
-                            <span class="text-xs text-gray-600 dark:text-gray-400" x-text="order.user?.name || 'Unknown'"></span>
+                            <span class="text-xs text-gray-600 dark:text-gray-400"
+                                x-text="order.user?.name || 'Unknown'"></span>
                         </div>
 
                         <!-- Table Number (if dine in) -->
@@ -201,25 +292,35 @@
                                     <span x-text="formatCurrency(item.subtotal || (item.price * item.quantity))"></span>
                                 </div>
                             </template>
-                            <div x-show="(order.items || []).length > 3" class="text-xs text-gray-500 dark:text-gray-500 italic">
+                            <div x-show="(order.items || []).length > 3"
+                                class="text-xs text-gray-500 dark:text-gray-500 italic">
                                 + <span x-text="(order.items || []).length - 3"></span> more items
                             </div>
                         </div>
 
                         <!-- Total & Actions -->
-                        <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                            <span class="text-sm font-bold text-slate-900 dark:text-white" x-text="formatCurrency(order.total_amount || 0)"></span>
+                        <div
+                            class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white"
+                                x-text="formatCurrency(order.total_amount || 0)"></span>
                             <div class="flex items-center gap-1">
-                                <button @click.stop="printKitchenReceipt(order.id)" class="p-1.5 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors" title="Print Kitchen Receipt">
+                                <button @click.stop="printKitchenReceipt(order.id)"
+                                    class="p-1.5 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                                    title="Print Kitchen Receipt">
                                     <span class="material-symbols-outlined text-[18px]">restaurant</span>
                                 </button>
-                                <button @click.stop="printTableReceipt(order.id)" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Print Table Receipt">
+                                <button @click.stop="printTableReceipt(order.id)"
+                                    class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                    title="Print Table Receipt">
                                     <span class="material-symbols-outlined text-[18px]">print</span>
                                 </button>
-                                <button @click.stop="deletePendingOrder(order.id)" class="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Delete">
+                                <button @click.stop="deletePendingOrder(order.id)"
+                                    class="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    title="Delete">
                                     <span class="material-symbols-outlined text-[18px]">delete</span>
                                 </button>
-                                <button @click.stop="openPaymentModal(order)" class="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-[#047a4b] transition-colors">
+                                <button @click.stop="openPaymentModal(order)"
+                                    class="px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-[#047a4b] transition-colors">
                                     Pay
                                 </button>
                             </div>
@@ -229,7 +330,8 @@
 
                 <!-- Empty State -->
                 <div x-show="pendingOrders.length === 0" class="text-center py-8">
-                    <span class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">receipt</span>
+                    <span
+                        class="material-symbols-outlined text-4xl text-gray-300 dark:text-gray-600 mb-2">receipt</span>
                     <p class="text-sm text-gray-500 dark:text-gray-400">No pending orders</p>
                 </div>
             </div>
@@ -238,56 +340,61 @@
         <!-- LEFT PANEL: Catalog (70%) -->
         <section
             class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark p-4 lg:p-6 lg:pr-3 overflow-hidden">
-            <!-- Category Tabs -->
-            <div class="flex-none mb-6 overflow-x-auto pb-2 scrollbar-hide">
-                <div class="flex gap-3">
+            <!-- Category Tabs - Improved for touch -->
+            <div class="flex-none mb-4 md:mb-6 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                <div class="flex gap-2 md:gap-3">
                     <button @click="filterCategory(null)"
                         :class="activeCategory === null ? 'bg-primary text-white hover:shadow-lg' : 'bg-white dark:bg-emerald-900/40 text-slate-700 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-800'"
-                        class="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-md transition-all transform hover:-translate-y-0.5">
-                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
-                        All Items
+                        class="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold shadow-md transition-all transform hover:-translate-y-0.5 whitespace-nowrap text-sm md:text-base">
+                        <span class="material-symbols-outlined text-[18px] md:text-[20px]">grid_view</span>
+                        <span class="hidden sm:inline">All Items</span>
+                        <span class="sm:hidden">All</span>
                     </button>
                     @foreach($categories as $category)
                         <button @click="filterCategory({{ $category->id }})"
                             :class="activeCategory === {{ $category->id }} ? 'bg-primary text-white hover:shadow-lg' : 'bg-white dark:bg-emerald-900/40 text-slate-700 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-800'"
-                            class="flex items-center gap-2 px-6 py-3 rounded-xl font-medium shadow-sm border border-slate-200 dark:border-emerald-800 transition-colors">
-                            <span class="material-symbols-outlined text-[20px] text-accent">local_drink</span>
+                            class="flex items-center gap-1.5 md:gap-2 px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-medium shadow-sm border border-slate-200 dark:border-emerald-800 transition-colors whitespace-nowrap text-sm md:text-base">
+                            <span
+                                class="material-symbols-outlined text-[18px] md:text-[20px] text-accent">local_drink</span>
                             {{ $category->name }}
                         </button>
                     @endforeach
                 </div>
             </div>
 
-            <!-- Product Grid -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
+            <!-- Product Grid - Responsive with better mobile layout -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 md:pr-2 pb-24 lg:pb-4">
+                <div
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
 
                     @foreach($items as $item)
-                        <!-- Card -->
+                        <!-- Product Card - Compact for mobile -->
                         <div x-show="isVisible({{ $item->category_id }}, '{{ addslashes($item->name) }}')"
                             @click="addToCart({{ json_encode($item) }})"
                             x-transition:enter="transition ease-out duration-300"
                             x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
-                            class="group bg-surface-light dark:bg-surface-dark rounded-2xl p-3 shadow-sm hover:shadow-md border border-slate-100 dark:border-emerald-900/50 cursor-pointer transition-all hover:border-primary/50 relative overflow-hidden">
+                            class="group bg-surface-light dark:bg-surface-dark rounded-xl md:rounded-2xl p-2 md:p-3 shadow-sm hover:shadow-md border border-slate-100 dark:border-emerald-900/50 cursor-pointer transition-all hover:border-primary/50 relative overflow-hidden active:scale-95">
                             <div
-                                class="aspect-square rounded-xl bg-emerald-50/50 dark:bg-emerald-900/20 mb-3 overflow-hidden relative">
+                                class="aspect-square rounded-lg md:rounded-xl bg-emerald-50/50 dark:bg-emerald-900/20 mb-2 md:mb-3 overflow-hidden relative">
                                 @if($item->image)
                                     <img class="w-full h-full object-contain transform group-hover:scale-110 transition-transform duration-300"
                                         src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}" />
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-4xl">🥤</div>
+                                    <div class="w-full h-full flex items-center justify-center text-3xl md:text-4xl">🥤</div>
                                 @endif
 
                                 <div
-                                    class="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm">
+                                    class="absolute top-1 right-1 md:top-2 md:right-2 bg-white/90 dark:bg-black/60 backdrop-blur-sm rounded-md md:rounded-lg px-1.5 md:px-2 py-0.5 md:py-1 shadow-sm">
                                     <span
-                                        class="text-sm font-bold text-slate-900 dark:text-white">{{ $settings['currency_symbol'] ?? 'Rp' }} {{ number_format($item->selling_price, 0, ',', '.') }}</span>
+                                        class="text-xs md:text-sm font-bold text-slate-900 dark:text-white">{{ $settings['currency_symbol'] ?? 'Rp' }}
+                                        {{ number_format($item->selling_price, 0, ',', '.') }}</span>
                                 </div>
                             </div>
-                            <h3 class="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight mb-1">
+                            <h3
+                                class="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-lg leading-tight mb-0.5 md:mb-1 line-clamp-2">
                                 {{ $item->name }}
                             </h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
                                 {{ $item->category->name ?? 'Product' }}
                             </p>
                         </div>
@@ -301,19 +408,48 @@
             </div>
         </section>
 
-        <!-- RIGHT PANEL: Current Order (30%) -->
-        <aside
-            class="flex-3 bg-surface-light dark:bg-surface-dark border-l border-slate-200 dark:border-emerald-900/50 flex flex-col shadow-xl max-w-112.5">
-            <!-- Header -->
-            <div class="flex-none p-5 border-b border-slate-100 dark:border-emerald-900/50">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <!-- RIGHT PANEL: Current Order - Slide-up drawer on mobile, sidebar on desktop -->
+        <!-- Mobile Cart Overlay -->
+        <div x-show="showMobileCart" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" @click="showMobileCart = false"
+            class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
+
+        <aside x-show="showMobileCart || (!isMobileView && showSidebar)"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-y-full lg:translate-x-full lg:translate-y-0"
+            x-transition:enter-end="translate-y-0 lg:translate-x-0" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0 lg:translate-x-0"
+            x-transition:leave-end="translate-y-full lg:translate-x-full lg:translate-y-0" class="fixed lg:relative bottom-0 left-0 right-0 lg:left-auto lg:right-auto lg:bottom-auto
+                   max-h-[85vh] lg:max-h-none lg:h-full
+                   w-full lg:w-80 xl:w-96 lg:max-w-[30rem]
+                   bg-surface-light dark:bg-surface-dark 
+                   border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-emerald-900/50 
+                   flex flex-col shadow-2xl lg:shadow-xl z-50 lg:z-auto
+                   rounded-t-3xl lg:rounded-none">
+            <!-- Mobile Drawer Handle -->
+            <div class="lg:hidden flex justify-center pt-3 pb-1">
+                <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+            </div>
+
+            <!-- Header with close button for mobile -->
+            <div class="flex-none p-4 lg:p-5 border-b border-slate-100 dark:border-emerald-900/50">
+                <div class="flex justify-between items-center mb-3 lg:mb-4">
+                    <h2 class="text-lg lg:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">receipt_long</span>
                         Order #NEW
                     </h2>
-                    <span
-                        class="px-2.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900 text-primary dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">Dine
-                        In</span>
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900 text-primary dark:text-emerald-300 text-xs font-bold uppercase tracking-wider">Dine
+                            In</span>
+                        <!-- Close button for mobile -->
+                        <button @click="showMobileCart = false"
+                            class="lg:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-500">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="flex gap-2">
                     <button @click="showCustomerModal = true"
@@ -389,8 +525,7 @@
                                 </div>
                                 <button @click="openItemNoteModal(index)"
                                     class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
-                                    :class="item.note ? 'text-amber-600' : ''"
-                                    title="Add Note">
+                                    :class="item.note ? 'text-amber-600' : ''" title="Add Note">
                                     <span class="material-symbols-outlined text-lg">note</span>
                                 </button>
                                 <span class="font-bold text-slate-900 dark:text-white min-w-17.5 text-right"
@@ -433,6 +568,141 @@
         </aside>
     </main>
 
+    <!-- Mobile Pending Orders Drawer (Resto Only) -->
+    <!-- Overlay -->
+    <div x-show="showMobilePendingOrders && companyType === 'resto'"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+        @click="showMobilePendingOrders = false" class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40">
+    </div>
+
+    <!-- Pending Orders Drawer -->
+    <div x-show="showMobilePendingOrders && companyType === 'resto'"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full"
+        x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" class="lg:hidden fixed bottom-0 left-0 right-0 
+               max-h-[80vh] 
+               bg-surface-light dark:bg-surface-dark 
+               border-t border-slate-200 dark:border-emerald-900/50 
+               flex flex-col shadow-2xl z-50
+               rounded-t-3xl">
+        <!-- Drawer Handle -->
+        <div class="flex justify-center pt-3 pb-1">
+            <div class="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-emerald-900/50">
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                Pending Orders
+                <span x-show="pendingOrders.length > 0"
+                    class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs font-bold rounded-full"
+                    x-text="pendingOrders.length"></span>
+            </h2>
+            <div class="flex items-center gap-2">
+                <button @click="loadPendingOrders()"
+                    class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-500">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
+                <button @click="showMobilePendingOrders = false"
+                    class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-500">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            <template x-for="order in pendingOrders" :key="order.id">
+                <div class="p-3 bg-white dark:bg-emerald-900/20 rounded-xl border border-slate-200 dark:border-emerald-800 hover:border-primary dark:hover:border-primary/50 transition-colors cursor-pointer"
+                    @click="showMobilePendingOrders = false; openPaymentModal(order)">
+                    <!-- Order Header -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-primary" x-text="'#' + order.id"></span>
+                            <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="{
+                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400': order.order_type === 'dine_in',
+                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': order.order_type === 'takeaway',
+                                    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': order.order_type === 'direct'
+                                }"
+                                x-text="order.order_type === 'dine_in' ? 'Dine In' : (order.order_type === 'takeaway' ? 'Takeaway' : 'Direct')">
+                            </span>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400"
+                            x-text="new Date(order.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })"></span>
+                    </div>
+
+                    <!-- Table & Cashier Info -->
+                    <div class="flex items-center gap-3 mb-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">person</span>
+                            <span x-text="order.user?.name || 'Unknown'"></span>
+                        </span>
+                        <span x-show="order.table_number" class="flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">table_restaurant</span>
+                            Table <span x-text="order.table_number" class="font-medium"></span>
+                        </span>
+                    </div>
+
+                    <!-- Total & Pay Button -->
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <span class="text-sm font-bold text-slate-900 dark:text-white"
+                            x-text="formatCurrency(order.total_amount || 0)"></span>
+                        <button @click.stop="showMobilePendingOrders = false; openPaymentModal(order)"
+                            class="px-4 py-1.5 bg-primary text-white text-xs font-medium rounded-lg hover:bg-[#047a4b] transition-colors">
+                            Pay Now
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Empty State -->
+            <div x-show="pendingOrders.length === 0" class="text-center py-12">
+                <span class="material-symbols-outlined text-5xl text-gray-300 dark:text-gray-600 mb-3">receipt</span>
+                <p class="text-sm text-gray-500 dark:text-gray-400">No pending orders</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Floating Pending Orders Button (Resto Only) -->
+    <button x-show="isMobileView && companyType === 'resto' && !showMobilePendingOrders && !showMobileCart"
+        @click="showMobilePendingOrders = true" x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100" class="lg:hidden fixed bottom-6 left-6 z-30 
+               w-14 h-14 rounded-full bg-orange-500 text-white 
+               shadow-2xl shadow-orange-500/40 
+               flex items-center justify-center
+               hover:bg-orange-600 active:scale-95
+               transition-all duration-200">
+        <span class="material-symbols-outlined text-2xl">receipt_long</span>
+        <!-- Pending Orders Badge -->
+        <span x-show="pendingOrders.length > 0" class="absolute -top-1 -right-1 
+                   min-w-[22px] h-5 px-1
+                   bg-red-500 text-white text-xs font-bold 
+                   rounded-full flex items-center justify-center
+                   shadow-lg" x-text="pendingOrders.length"></span>
+    </button>
+
+    <!-- Mobile Floating Cart Button -->
+    <button x-show="isMobileView && !showMobileCart && !showMobilePendingOrders" @click="showMobileCart = true"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100" class="lg:hidden fixed bottom-6 right-6 z-30 
+               w-16 h-16 rounded-full bg-primary text-white 
+               shadow-2xl shadow-primary/40 
+               flex items-center justify-center
+               hover:bg-primary-hover active:scale-95
+               transition-all duration-200">
+        <span class="material-symbols-outlined text-3xl">shopping_cart</span>
+        <!-- Cart Badge -->
+        <span x-show="cart.length > 0" class="absolute -top-1 -right-1 
+                   min-w-[24px] h-6 px-1.5
+                   bg-accent text-white text-xs font-bold 
+                   rounded-full flex items-center justify-center
+                   shadow-lg animate-pulse" x-text="cart.reduce((sum, item) => sum + item.quantity, 0)"></span>
+    </button>
+
+
     <div x-data="toast()" @toast-add.window="add($event.detail.message, $event.detail.type)"
         class="fixed bottom-5 right-5 z-50 flex flex-col gap-2">
         <template x-for="notif in notifications" :key="notif.id">
@@ -454,16 +724,13 @@
     <div x-show="showPaymentModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <!-- Modal Container - Centered with fixed width -->
-        <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showPaymentModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+        <div class="max-w-md w-full max-h-[90vh] bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
+            @click.outside="showPaymentModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10 shrink-0">
                 <h2 class="text-lg font-bold tracking-tight text-[#0d1c16] dark:text-white">Payment Details</h2>
                 <button @click="showPaymentModal = false"
                     class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
@@ -471,7 +738,7 @@
                 </button>
             </div>
             <!-- Modal Body -->
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
                 <!-- Total Due -->
                 <div class="flex flex-col items-center justify-center space-y-1 py-1">
                     <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total
@@ -526,6 +793,121 @@
                                 placeholder="0">
                         </div>
                     </div>
+                    <!-- Quick Amount Buttons with +/- -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- 500 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 500)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                500
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 500"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 1.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 1000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                1.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 1000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 2.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 2000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                2.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 2000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 5.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 5000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                5.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 5000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 10.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 10000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                10.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 10000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 20.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 20000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                20.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 20000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 50.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 50000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                50.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 50000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 100.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 100000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                100.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 100000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                    </div>
                     <div
                         class="flex items-center justify-between p-3 bg-primary/5 border border-dashed border-primary/20 rounded-lg">
                         <div class="flex items-center gap-1.5 text-primary">
@@ -548,12 +930,13 @@
                 </div>
             </div>
             <!-- Footer Actions -->
-            <div class="p-5 pt-0 flex gap-3">
+            <div class="p-5 pt-0 flex gap-3 shrink-0 border-t border-gray-100 dark:border-white/10">
                 <button @click="showPaymentModal = false"
                     class="flex-1 py-2.5 px-3 rounded-lg border border-gray-200 dark:border-gray-600 font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm">
                     Cancel
                 </button>
-                <button @click="processPayment" :disabled="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(total)"
+                <button @click="processPayment"
+                    :disabled="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(total)"
                     :class="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(total) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#047a4b] shadow-lg shadow-primary/25'"
                     class="flex-2 py-2.5 px-3 rounded-lg bg-primary text-white font-bold text-base transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                     Finalize Payment
@@ -566,12 +949,9 @@
     <div x-show="showCustomerModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showCustomerModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showCustomerModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -614,12 +994,9 @@
     <div x-show="showNoteModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showNoteModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showNoteModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -632,7 +1009,8 @@
             <!-- Modal Body -->
             <div class="p-5 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Note for this order</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Note for this
+                        order</label>
                     <textarea x-model="orderNote" rows="4"
                         class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-black/20 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary resize-none"
                         placeholder="Add a note (e.g., less sugar, no ice, etc.)"></textarea>
@@ -656,12 +1034,9 @@
     <div x-show="showItemNoteModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showItemNoteModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showItemNoteModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -674,7 +1049,8 @@
             <!-- Modal Body -->
             <div class="p-5 space-y-4">
                 <div>
-                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2" x-text="'Note for ' + currentItemName"></p>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
+                        x-text="'Note for ' + currentItemName"></p>
                     <textarea x-model="currentItemNote" rows="3"
                         class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-black/20 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary resize-none"
                         placeholder="e.g., less sugar, no ice, extra hot, etc."></textarea>
@@ -694,12 +1070,9 @@
     <div x-show="showOrderTypeModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
         <div class="max-w-lg bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showOrderTypeModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+            @click.outside="showOrderTypeModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -713,11 +1086,15 @@
             <div class="p-5 space-y-3">
                 <!-- Direct Payment -->
                 <label class="relative flex cursor-pointer">
-                    <input type="radio" name="order_type" value="direct" x-model="selectedOrderType" class="peer sr-only">
-                    <div class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
+                    <input type="radio" name="order_type" value="direct" x-model="selectedOrderType"
+                        class="peer sr-only">
+                    <div
+                        class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-green-600 dark:text-green-400">payments</span>
+                            <div
+                                class="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                <span
+                                    class="material-symbols-outlined text-green-600 dark:text-green-400">payments</span>
                             </div>
                             <div>
                                 <p class="font-semibold text-gray-900 dark:text-white">Direct Payment</p>
@@ -729,11 +1106,15 @@
 
                 <!-- Dine In -->
                 <label class="relative flex cursor-pointer">
-                    <input type="radio" name="order_type" value="dine_in" x-model="selectedOrderType" class="peer sr-only">
-                    <div class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
+                    <input type="radio" name="order_type" value="dine_in" x-model="selectedOrderType"
+                        class="peer sr-only">
+                    <div
+                        class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-orange-600 dark:text-orange-400">restaurant</span>
+                            <div
+                                class="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                                <span
+                                    class="material-symbols-outlined text-orange-600 dark:text-orange-400">restaurant</span>
                             </div>
                             <div>
                                 <p class="font-semibold text-gray-900 dark:text-white">Dine In</p>
@@ -745,11 +1126,15 @@
 
                 <!-- Takeaway -->
                 <label class="relative flex cursor-pointer">
-                    <input type="radio" name="order_type" value="takeaway" x-model="selectedOrderType" class="peer sr-only">
-                    <div class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
+                    <input type="radio" name="order_type" value="takeaway" x-model="selectedOrderType"
+                        class="peer sr-only">
+                    <div
+                        class="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 hover:border-gray-300 dark:hover:border-gray-500">
                         <div class="flex items-center gap-3">
-                            <div class="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">shopping_bag</span>
+                            <div
+                                class="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <span
+                                    class="material-symbols-outlined text-blue-600 dark:text-blue-400">shopping_bag</span>
                             </div>
                             <div>
                                 <p class="font-semibold text-gray-900 dark:text-white">Takeaway</p>
@@ -784,16 +1169,13 @@
     <!-- Pending Payment Modal -->
     <div x-show="showPendingPaymentModal" style="display: none;"
         class="fixed inset-0 z-9999 flex items-center justify-center bg-[#0d1c16]/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div class="max-w-md bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
-            @click.outside="showPendingPaymentModal = false"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100"
+        <div class="max-w-md w-full max-h-[90vh] bg-white dark:bg-[#1a2e26] rounded-xl shadow-2xl overflow-hidden flex flex-col relative"
+            @click.outside="showPendingPaymentModal = false" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/10 shrink-0">
                 <h2 class="text-lg font-bold tracking-tight text-[#0d1c16] dark:text-white">Process Payment</h2>
                 <button @click="showPendingPaymentModal = false"
                     class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors">
@@ -801,7 +1183,7 @@
                 </button>
             </div>
             <!-- Modal Body -->
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
                 <!-- Order Info -->
                 <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     <div>
@@ -810,31 +1192,39 @@
                     </div>
                     <div class="text-right">
                         <p class="text-xs text-gray-500 dark:text-gray-400">Total Due</p>
-                        <p class="font-bold text-primary text-lg" x-text="formatCurrency(selectedPendingOrder?.total_amount || 0)"></p>
+                        <p class="font-bold text-primary text-lg"
+                            x-text="formatCurrency(selectedPendingOrder?.total_amount || 0)"></p>
                     </div>
                 </div>
 
                 <!-- Payment Methods -->
                 <div class="space-y-2">
-                    <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase ml-1">Payment Method</label>
+                    <label class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase ml-1">Payment
+                        Method</label>
                     <div class="grid grid-cols-3 gap-2">
                         <label class="cursor-pointer">
-                            <input type="radio" name="pending_payment_method" value="cash" x-model="paymentMethod" class="peer sr-only">
-                            <div class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-primary bg-primary/10 text-primary transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:bg-primary/5">
+                            <input type="radio" name="pending_payment_method" value="cash" x-model="paymentMethod"
+                                class="peer sr-only">
+                            <div
+                                class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-primary bg-primary/10 text-primary transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:bg-primary/5">
                                 <span class="material-symbols-outlined mb-0.5 text-xl">payments</span>
                                 <span class="text-xs font-semibold mt-1">Cash</span>
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="pending_payment_method" value="qris" x-model="paymentMethod" class="peer sr-only">
-                            <div class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
+                            <input type="radio" name="pending_payment_method" value="qris" x-model="paymentMethod"
+                                class="peer sr-only">
+                            <div
+                                class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
                                 <span class="material-symbols-outlined mb-0.5 text-xl">qr_code_scanner</span>
                                 <span class="text-xs font-medium mt-1">QRIS</span>
                             </div>
                         </label>
                         <label class="cursor-pointer">
-                            <input type="radio" name="pending_payment_method" value="debit" x-model="paymentMethod" class="peer sr-only">
-                            <div class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
+                            <input type="radio" name="pending_payment_method" value="debit" x-model="paymentMethod"
+                                class="peer sr-only">
+                            <div
+                                class="flex flex-col items-center justify-center p-2 rounded-lg border-2 border-transparent bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary">
                                 <span class="material-symbols-outlined mb-0.5 text-xl">credit_card</span>
                                 <span class="text-xs font-medium mt-1">Debit</span>
                             </div>
@@ -845,7 +1235,8 @@
                 <!-- Cash Calculation (Visible only if Cash) -->
                 <div x-show="paymentMethod === 'cash'" class="space-y-3 pt-1" x-transition>
                     <div>
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1.5 ml-1">Cash Received</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1.5 ml-1">Cash
+                            Received</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-400 text-sm font-medium" x-text="currencySymbol"></span>
@@ -855,7 +1246,123 @@
                                 placeholder="0">
                         </div>
                     </div>
-                    <div class="flex items-center justify-between p-3 bg-primary/5 border border-dashed border-primary/20 rounded-lg">
+                    <!-- Quick Amount Buttons with +/- -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- 500 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 500)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                500
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 500"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 1.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 1000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                1.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 1000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 2.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 2000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                2.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 2000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 5.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 5000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                5.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 5000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 10.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 10000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                10.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 10000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 20.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 20000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                20.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 20000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 50.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 50000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                50.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 50000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                        <!-- 100.000 -->
+                        <div class="flex items-center gap-1">
+                            <button @click="cashReceived = Math.max(0, (parseFloat(cashReceived) || 0) - 100000)"
+                                class="w-8 h-8 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                -
+                            </button>
+                            <div class="flex-1 py-1.5 px-2 bg-gray-100 dark:bg-gray-700 text-center text-sm font-semibold text-gray-900 dark:text-white rounded-lg">
+                                100.000
+                            </div>
+                            <button @click="cashReceived = (parseFloat(cashReceived) || 0) + 100000"
+                                class="w-8 h-8 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-lg shadow-sm transition-colors">
+                                +
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="flex items-center justify-between p-3 bg-primary/5 border border-dashed border-primary/20 rounded-lg">
                         <div class="flex items-center gap-1.5 text-primary">
                             <span class="material-symbols-outlined text-[18px]">currency_exchange</span>
                             <span class="text-xs font-semibold">Change Return</span>
@@ -863,15 +1370,26 @@
                         <span class="text-lg font-bold text-primary"
                             x-text="formatCurrency(Math.max(0, cashReceived - (selectedPendingOrder?.total_amount || 0)))"></span>
                     </div>
+                    <!-- Receipt Toggle -->
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Print Receipt?</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" x-model="printReceipt" class="sr-only peer">
+                            <div
+                                class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary">
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
             <!-- Footer Actions -->
-            <div class="p-5 pt-0 flex gap-3">
+            <div class="p-5 pt-0 flex gap-3 shrink-0 border-t border-gray-100 dark:border-white/10">
                 <button @click="showPendingPaymentModal = false"
                     class="flex-1 py-2.5 px-3 rounded-lg border border-gray-200 dark:border-gray-600 font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-sm">
                     Cancel
                 </button>
-                <button @click="processPendingPayment" :disabled="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(selectedPendingOrder?.total_amount || 0)"
+                <button @click="processPendingPayment"
+                    :disabled="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(selectedPendingOrder?.total_amount || 0)"
                     :class="paymentMethod === 'cash' && parseFloat(cashReceived) < parseFloat(selectedPendingOrder?.total_amount || 0) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#047a4b] shadow-lg'"
                     class="flex-2 py-2.5 px-3 rounded-lg bg-primary text-white font-bold text-base transition-colors">
                     Process Payment
@@ -911,6 +1429,15 @@
                 search: '',
                 isLoading: false,
                 barcodeScan: '',
+
+                // Mobile Responsive State
+                showMobileCart: false,
+                showMobileSearch: false,
+                showMobilePendingOrders: false,
+                isMobileView: window.innerWidth < 1024,
+
+                // Sidebar Toggle State (Desktop)
+                showSidebar: true,
 
                 // Settings
                 settings: settings,
@@ -952,6 +1479,19 @@
                 init() {
                     // Test notification system on load
                     console.log('POS initialized, company type:', this.companyType);
+
+                    // Handle window resize for responsive behavior
+                    const handleResize = () => {
+                        this.isMobileView = window.innerWidth < 1024;
+                        // Auto-hide mobile drawers when switching to desktop
+                        if (!this.isMobileView) {
+                            this.showMobileCart = false;
+                            this.showMobileSearch = false;
+                            this.showMobilePendingOrders = false;
+                        }
+                    };
+                    window.addEventListener('resize', handleResize);
+
                     // Load pending orders for resto
                     if (this.companyType === 'resto') {
                         this.loadPendingOrders();
@@ -1164,7 +1704,8 @@
 
                     const payload = {
                         payment_method: this.paymentMethod,
-                        cash_received: this.cashReceived || 0
+                        cash_received: this.cashReceived || 0,
+                        print_receipt: this.printReceipt
                     };
 
                     axios.post(`/pos/orders/${this.selectedPendingOrder.id}/payment`, payload)

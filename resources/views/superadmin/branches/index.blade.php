@@ -86,15 +86,20 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                @if($branch->is_active)
+                                @if($branch->subscription_status_text === 'Active')
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                                         <span class="material-symbols-outlined text-xs mr-1">check_circle</span>
-                                        Active
+                                        {{ $branch->subscription_status_text }}
+                                    </span>
+                                @elseif($branch->subscription_status_text === 'Expired')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+                                        <span class="material-symbols-outlined text-xs mr-1">warning</span>
+                                        {{ $branch->subscription_status_text }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                         <span class="material-symbols-outlined text-xs mr-1">cancel</span>
-                                        Inactive
+                                        {{ $branch->subscription_status_text }}
                                     </span>
                                 @endif
                             </td>

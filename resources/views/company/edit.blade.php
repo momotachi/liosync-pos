@@ -1,4 +1,4 @@
-@extends('layouts.superadmin')
+@extends('layouts.company')
 
 @section('title', 'Edit Company - ' . $company->name)
 

@@ -1,4 +1,4 @@
-@extends('layouts.superadmin')
+@extends('layouts.company')
 
 @section('title', 'Users - ' . $company->name)
 
@@ -19,6 +19,11 @@
                 @endif
             </p>
         </div>
+        <a href="{{ route('company.users.create', $company) }}"
+           class="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors">
+            <span class="material-symbols-outlined text-sm mr-2">add</span>
+            Add User
+        </a>
     </div>
 
     <!-- Branch Filter -->
@@ -56,6 +61,9 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                        @if(auth()->user()->isSuperAdmin())
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Password</th>
+                        @endif
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Branch</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
                         <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
@@ -78,12 +86,30 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="text-sm text-gray-600 dark:text-gray-400">
-                                    <div class="flex items-center gap-1">
+                                    <div class="flex items-center gap-2">
                                         <span class="material-symbols-outlined text-sm">email</span>
-                                        {{ $user->email }}
+                                        <span class="email-text">{{ $user->email }}</span>
+                                        <button onclick="copyEmail('{{ $user->email }}')"
+                                                class="text-gray-400 hover:text-primary transition-colors"
+                                                title="Copy email">
+                                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        </button>
                                     </div>
                                 </div>
                             </td>
+                            @if(auth()->user()->isSuperAdmin())
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm text-gray-400">password</span>
+                                    <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono text-gray-700 dark:text-gray-300">{{ $user->password_hint ?? 'N/A' }}</code>
+                                    <button onclick="copyEmail('{{ $user->password_hint ?? 'N/A' }}')"
+                                            class="text-gray-400 hover:text-primary transition-colors ml-1"
+                                            title="Copy password">
+                                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                                    </button>
+                                </div>
+                            </td>
+                            @endif
                             <td class="px-6 py-4">
                                 @if($user->branch)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
@@ -121,29 +147,15 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <!-- Unified Edit Button for ALL users -->
+                                    <!-- Edit Button -->
                                     <a href="{{ route('company.users.edit', [$company, $user]) }}"
                                        class="inline-flex items-center px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-colors">
                                         <span class="material-symbols-outlined text-sm mr-1">edit</span>
                                         Edit
                                     </a>
 
-                                    @if($user->branch)
-                                        <!-- Branch user - Delete via branch route -->
-                                        <form action="{{ route('company.branches.users.destroy', [$company, $user->branch, $user]) }}"
-                                              method="POST"
-                                              class="inline"
-                                              onsubmit="return confirm('Are you sure you want to delete {{ $user->name }}?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="inline-flex items-center px-3 py-1.5 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg text-xs font-medium transition-colors">
-                                                <span class="material-symbols-outlined text-sm mr-1">delete</span>
-                                                Delete
-                                            </button>
-                                        </form>
-                                    @elseif($user->roles->count() > 0 && $user->roles->first()->name === 'Company Admin')
-                                        <!-- Company Admin - Delete via company route -->
+                                    <!-- Delete Button - Company admin can delete any user except themselves -->
+                                    @if($user->id !== auth()->id())
                                         <form action="{{ route('company.users.destroy', [$company, $user]) }}"
                                               method="POST"
                                               class="inline"
@@ -194,4 +206,113 @@
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+function copyEmail(email) {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(function() {
+            showNotification('Email copied!');
+        }).catch(function(err) {
+            console.error('Clipboard API failed: ', err);
+            // Fallback to older method
+            fallbackCopy(email);
+        });
+    } else {
+        // Direct fallback for browsers without clipboard API
+        fallbackCopy(email);
+    }
+}
+
+function fallbackCopy(email) {
+    const textArea = document.createElement('textarea');
+    textArea.value = email;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    textArea.style.top = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        document.execCommand('copy');
+        showNotification('Email copied!');
+    } catch (e) {
+        console.error('Failed to copy: ', e);
+        showNotification('Failed to copy email', true);
+    }
+
+    document.body.removeChild(textArea);
+}
+
+function showNotification(message, isError = false) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${isError ? '#ef4444' : '#10b981'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    notification.innerHTML = `
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${isError
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+            }
+        </svg>
+        <span>${message}</span>
+    `;
+
+    // Add animation keyframes
+    if (!document.getElementById('copy-notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'copy-notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(notification);
+
+    setTimeout(function() {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(function() {
+            notification.remove();
+        }, 300);
+    }, 2000);
+}
+</script>
+@endpush
 @endsection

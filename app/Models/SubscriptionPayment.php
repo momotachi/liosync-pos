@@ -9,6 +9,7 @@ class SubscriptionPayment extends Model
     protected $fillable = [
         'branch_subscription_id',
         'amount',
+        'months',
         'payment_method',
         'payment_date',
         'proof_image',
@@ -66,16 +67,28 @@ class SubscriptionPayment extends Model
         $this->confirmed_at = now();
         $this->save();
 
-        // Activate the subscription
+        // Activate or extend the subscription
         if ($this->branchSubscription) {
-            $this->branchSubscription->status = 'active';
-            $this->branchSubscription->payment_date = now();
-            $this->branchSubscription->save();
+            $subscription = $this->branchSubscription;
+
+            // If this is a renewal payment (has months), extend the subscription
+            if ($this->months && $this->months > 0) {
+                // Extend from current end date or from now if expired
+                $currentEndDate = $subscription->end_date && $subscription->end_date->isFuture()
+                    ? $subscription->end_date
+                    : now();
+
+                $subscription->end_date = $currentEndDate->addMonths($this->months);
+            }
+
+            $subscription->status = 'active';
+            $subscription->payment_date = now();
+            $subscription->save();
 
             // Update branch current subscription
-            if ($this->branchSubscription->branch) {
-                $this->branchSubscription->branch->current_subscription_id = $this->branchSubscription->id;
-                $this->branchSubscription->branch->save();
+            if ($subscription->branch) {
+                $subscription->branch->current_subscription_id = $subscription->id;
+                $subscription->branch->save();
             }
         }
     }

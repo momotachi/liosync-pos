@@ -6,9 +6,10 @@ use App\Http\Controllers\Superadmin\BranchController;
 use App\Http\Controllers\Superadmin\SwitchCompanyController;
 use App\Http\Controllers\Superadmin\SubscriptionPlanController;
 use App\Http\Controllers\Superadmin\SubscriptionController;
+use App\Http\Controllers\Superadmin\SettingController;
 
 // Superadmin Routes (Protected - Superadmin Only)
-Route::middleware(['auth', 'restrict.cashier'])->prefix('superadmin')->name('superadmin.')->group(function () {
+Route::middleware(['auth', 'superadmin.only'])->prefix('superadmin')->name('superadmin.')->group(function () {
     // Companies Management
     Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::get('/companies/create', [CompanyController::class, 'create'])->name('companies.create');
@@ -37,9 +38,19 @@ Route::middleware(['auth', 'restrict.cashier'])->prefix('superadmin')->name('sup
 
     // Subscriptions Management (ALL companies)
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
-    Route::get('/subscriptions/{id}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
     Route::post('/subscriptions/{subscription}/toggle', [SubscriptionController::class, 'toggleStatus'])->name('subscriptions.toggle');
+    Route::post('/subscriptions/{subscription}/adjust-period', [SubscriptionController::class, 'adjustPeriod'])->name('subscriptions.adjust-period');
     Route::post('/payments/{payment}/confirm', [SubscriptionController::class, 'confirmPayment'])->name('payments.confirm');
     Route::post('/payments/bulk-confirm', [SubscriptionController::class, 'confirmPaymentBulk'])->name('payments.bulk-confirm');
     Route::post('/payments/{payment}/reject', [SubscriptionController::class, 'rejectPayment'])->name('payments.reject');
+
+    // System Settings
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+    // Bank Management
+    Route::post('/settings/banks', [SettingController::class, 'storeBank'])->name('settings.banks.store');
+    Route::put('/settings/banks/{bank}', [SettingController::class, 'updateBank'])->name('settings.banks.update');
+    Route::delete('/settings/banks/{bank}', [SettingController::class, 'deleteBank'])->name('settings.banks.delete');
 });

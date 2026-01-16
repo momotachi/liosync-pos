@@ -70,7 +70,7 @@
                             Superadmin cannot purchase
                         </span>
                     @elseif(auth()->user()?->isCompanyAdmin())
-                        <a href="{{ route('company.subscriptions.purchase', auth()->user()->company) }}"
+                        <a href="{{ route('company.subscriptions.purchase', auth()->user()->company_id) }}"
                            class="block w-full text-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
                             Subscribe Now
                         </a>

@@ -96,7 +96,7 @@
                                     <input type="checkbox"
                                            name="unlimited_branches"
                                            value="1"
-                                           @if(!$plan || $plan->max_branches === null) checked @endif
+                                           @if(!isset($plan) || $plan->max_branches === null) checked @endif
                                            class="w-4 h-4 text-primary rounded focus:ring-primary">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">Unlimited</span>
                                 </label>
@@ -117,7 +117,7 @@
                                     <input type="checkbox"
                                            name="unlimited_users"
                                            value="1"
-                                           @if(!$plan || $plan->max_users === null) checked @endif
+                                           @if(!isset($plan) || $plan->max_users === null) checked @endif
                                            class="w-4 h-4 text-primary rounded focus:ring-primary">
                                     <span class="text-sm text-gray-700 dark:text-gray-300">Unlimited</span>
                                 </label>

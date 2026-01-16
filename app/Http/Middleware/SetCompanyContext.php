@@ -24,8 +24,12 @@ class SetCompanyContext
                 Session::put('company_id', $user->company_id);
             }
 
-            // Set branch context from user's branch
-            if ($user->branch_id && !Session::has('branch_id')) {
+            // For Company Admin, check if they've switched to a specific branch
+            if ($user->isCompanyAdmin() && Session::has('active_branch_id')) {
+                Session::put('branch_id', Session::get('active_branch_id'));
+            }
+            // For Branch Admin, set branch context from user's branch
+            elseif ($user->branch_id && !Session::has('branch_id')) {
                 Session::put('branch_id', $user->branch_id);
             }
         }

@@ -2,8 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Branch Routes (Protected)
-Route::middleware(['auth', 'restrict.cashier'])->group(function () {
+// Branch Routes - Subscription Management (EXEMPT from subscription check)
+Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Branch\SubscriptionController::class, 'index'])->name('index');
+    Route::get('/purchase', [\App\Http\Controllers\Branch\SubscriptionController::class, 'purchase'])->name('purchase');
+    Route::post('/purchase', [\App\Http\Controllers\Branch\SubscriptionController::class, 'processPurchase'])->name('process');
+    Route::get('/history', [\App\Http\Controllers\Branch\SubscriptionController::class, 'history'])->name('history');
+});
+
+// Branch Routes (Protected with subscription check)
+Route::middleware(['auth', 'restrict.cashier', 'subscription'])->group(function () {
     Route::get('/branch', [\App\Http\Controllers\DashboardController::class, 'index'])->name('branch.dashboard');
 
     // Items CRUD (Unified Products + Raw Materials)
@@ -15,6 +23,11 @@ Route::middleware(['auth', 'restrict.cashier'])->group(function () {
     Route::delete('/branch/items/{id}', [\App\Http\Controllers\AdminItemController::class, 'destroy'])->name('admin.items.destroy');
     Route::post('/branch/items/{id}/restock', [\App\Http\Controllers\AdminItemController::class, 'restock'])->name('admin.items.restock');
     Route::post('/branch/items/{id}/adjust-stock', [\App\Http\Controllers\AdminItemController::class, 'adjustStock'])->name('admin.items.adjust-stock');
+
+    // Import/Export Items
+    Route::get('/branch/items/export', [\App\Http\Controllers\AdminItemController::class, 'export'])->name('admin.items.export');
+    Route::get('/branch/items/template', [\App\Http\Controllers\AdminItemController::class, 'downloadTemplate'])->name('admin.items.template');
+    Route::post('/branch/items/import', [\App\Http\Controllers\AdminItemController::class, 'import'])->name('admin.items.import');
 
     // Categories
     Route::get('/branch/categories', [\App\Http\Controllers\AdminItemController::class, 'categoriesIndex'])->name('admin.categories.index');
@@ -31,6 +44,11 @@ Route::middleware(['auth', 'restrict.cashier'])->group(function () {
     Route::get('/branch/reports', [\App\Http\Controllers\AdminReportsController::class, 'index'])->name('admin.reports.index');
     Route::get('/branch/reports/sales', [\App\Http\Controllers\AdminReportsController::class, 'salesTransactions'])->name('admin.reports.sales');
     Route::get('/branch/reports/purchases', [\App\Http\Controllers\AdminReportsController::class, 'purchases'])->name('admin.reports.purchases');
+    Route::get('/branch/reports/profit', [\App\Http\Controllers\AdminReportsController::class, 'profit'])->name('admin.reports.profit');
+    Route::get('/branch/reports/cashflow', [\App\Http\Controllers\AdminReportsController::class, 'cashflow'])->name('admin.reports.cashflow');
+    Route::post('/branch/reports/cashflow/update-balance', [\App\Http\Controllers\AdminReportsController::class, 'updateBalance'])->name('admin.cashflow.update-balance');
+    Route::post('/branch/reports/cashflow/transfer', [\App\Http\Controllers\AdminReportsController::class, 'transferBalance'])->name('admin.cashflow.transfer');
+    Route::post('/branch/reports/cashflow/delete-transaction', [\App\Http\Controllers\AdminReportsController::class, 'deleteTransaction'])->name('admin.cashflow.delete-transaction');
     Route::get('/branch/reports/products', [\App\Http\Controllers\AdminReportsController::class, 'productSales'])->name('admin.reports.products');
     Route::get('/branch/reports/inventory', [\App\Http\Controllers\AdminReportsController::class, 'inventory'])->name('admin.reports.inventory');
     Route::get('/branch/reports/export', [\App\Http\Controllers\AdminReportsController::class, 'export'])->name('admin.reports.export');
@@ -56,12 +74,4 @@ Route::middleware(['auth', 'restrict.cashier'])->group(function () {
 
     // Subscription Plans (Read-only for viewing available plans)
     Route::get('/subscription-plans', [\App\Http\Controllers\SubscriptionPlanViewController::class, 'index'])->name('subscription-plans.view');
-
-    // Subscription Management (exempt from subscription check)
-    Route::prefix('subscription')->name('subscription.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Branch\SubscriptionController::class, 'index'])->name('index');
-        Route::get('/purchase', [\App\Http\Controllers\Branch\SubscriptionController::class, 'purchase'])->name('purchase');
-        Route::post('/purchase', [\App\Http\Controllers\Branch\SubscriptionController::class, 'processPurchase'])->name('process');
-        Route::get('/history', [\App\Http\Controllers\Branch\SubscriptionController::class, 'history'])->name('history');
-    });
 });

@@ -4,16 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AdminSettingsController extends Controller
 {
+    private function authorizeSettingsAccess()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Cashier cannot access settings
+        if (!$user || $user->isCashier()) {
+            abort(403, 'Access denied. Cashier cannot access settings.');
+        }
+    }
+
     /**
      * Display the settings page.
      */
     public function index()
     {
+        $this->authorizeSettingsAccess();
+
         $settings = Setting::grouped();
 
         return view('admin.settings.index', compact('settings'));
@@ -24,6 +38,8 @@ class AdminSettingsController extends Controller
      */
     public function update(Request $request)
     {
+        $this->authorizeSettingsAccess();
+
         $allSettings = Setting::pluck('type', 'key')->toArray();
 
         $validationRules = [];
@@ -55,16 +71,18 @@ class AdminSettingsController extends Controller
      */
     public function reset()
     {
-        DB::transaction(function () {
-            // Reset all settings to their default values
+        $this->authorizeSettingsAccess();
+
+        $branchId = $this->getEffectiveBranchId();
+
+        DB::transaction(function () use ($branchId) {
+            // Reset all settings to their default values (no currency settings)
             $defaults = [
                 // General Settings
                 'store_name' => 'JuicePOS Store',
                 'store_address' => '',
                 'store_phone' => '',
                 'store_email' => '',
-                'currency' => 'USD',
-                'currency_symbol' => '$',
 
                 // POS Settings
                 'auto_logout_time' => '30',
@@ -89,7 +107,9 @@ class AdminSettingsController extends Controller
             ];
 
             foreach ($defaults as $key => $value) {
-                $setting = Setting::where('key', $key)->first();
+                $setting = Setting::where('key', $key)
+                    ->where('branch_id', $branchId)
+                    ->first();
                 if ($setting) {
                     $setting->value = $value;
                     $setting->save();
@@ -100,5 +120,20 @@ class AdminSettingsController extends Controller
         return redirect()
             ->route('admin.settings.index')
             ->with('success', 'Settings reset to default values!');
+    }
+
+    /**
+     * Get the effective branch ID for settings.
+     */
+    private function getEffectiveBranchId()
+    {
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
+
+        // Use authenticated user's branch
+        $user = Auth::user();
+        return $user ? $user->branch_id : null;
     }
 }

@@ -122,25 +122,157 @@ class SubscriptionController extends Controller
     }
 
     /**
-     * Process purchase/upgrade for a branch.
+     * Renew an existing subscription (requires payment approval).
+     */
+    public function renew(Request $request, $company)
+    {
+        $companyId = is_numeric($company) ? $company : $company->id;
+
+        $validated = $request->validate([
+            'subscription_id' => 'required|exists:branch_subscriptions,id',
+            'branch_id' => 'required|exists:branches,id',
+            'months' => 'required|integer|min:1|max:36',
+            'payment_proof' => 'required|image|max:2048',
+        ]);
+
+        // Get the existing subscription
+        $subscription = BranchSubscription::with(['branch', 'subscriptionPlan'])
+            ->findOrFail($validated['subscription_id']);
+
+        // Verify subscription belongs to company
+        if ($subscription->branch->company_id != $companyId) {
+            abort(403);
+        }
+
+        // Verify branch matches
+        if ($subscription->branch_id != $validated['branch_id']) {
+            return back()->with('error', 'Branch mismatch.');
+        }
+
+        DB::transaction(function () use ($request, $validated, $subscription) {
+            // Upload payment proof
+            $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+
+            // Create payment record for the renewal
+            $subscription->payments()->create([
+                'amount' => $subscription->subscriptionPlan->price * (int)$validated['months'],
+                'months' => (int)$validated['months'],
+                'payment_method' => 'bank_transfer',
+                'proof_image' => $proofPath,
+                'status' => 'pending',
+            ]);
+        });
+
+        return redirect()->route('company.subscriptions.index', $companyId)
+            ->with('success', 'Payment submitted! Subscription will be extended once admin confirms payment.');
+    }
+
+    /**
+     * Bulk renew subscriptions (requires payment approval).
+     */
+    public function bulkRenew(Request $request, $company)
+    {
+        $companyId = is_numeric($company) ? $company : $company->id;
+
+        $validated = $request->validate([
+            'subscription_ids' => 'required|array',
+            'subscription_ids.*' => 'exists:branch_subscriptions,id',
+            'months' => 'required|integer|min:1|max:36',
+            'payment_proof' => 'required|image|max:2048',
+        ]);
+
+        // Get subscriptions and verify they belong to the company
+        $subscriptions = BranchSubscription::with(['branch', 'subscriptionPlan'])
+            ->whereIn('id', $validated['subscription_ids'])
+            ->whereHas('branch', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
+            })
+            ->get();
+
+        if ($subscriptions->isEmpty()) {
+            return back()->with('error', 'No valid subscriptions found.');
+        }
+
+        DB::transaction(function () use ($request, $validated, $subscriptions) {
+            // Upload payment proof once
+            $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+
+            // Create payment record for each subscription
+            foreach ($subscriptions as $subscription) {
+                $subscription->payments()->create([
+                    'amount' => $subscription->subscriptionPlan->price * (int)$validated['months'],
+                    'months' => (int)$validated['months'],
+                    'payment_method' => 'bank_transfer',
+                    'proof_image' => $proofPath,
+                    'status' => 'pending',
+                ]);
+            }
+        });
+
+        return redirect()->route('company.subscriptions.index', $companyId)
+            ->with('success', "Payment submitted for {$subscriptions->count()} subscription(s)! Subscriptions will be extended once admin confirms payment.");
+    }
+
+    /**
+     * Process purchase/upgrade for a branch or all branches.
      */
     public function processPurchase(Request $request, $company)
     {
         $companyId = is_numeric($company) ? $company : $company->id;
 
         $validated = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
+            'branch_id' => 'required',
             'subscription_plan_id' => 'required|exists:subscription_plans,id',
             'months' => 'required|integer|min:1|max:36',
             'payment_proof' => 'required|image|max:2048',
         ]);
 
+        $plan = \App\Models\SubscriptionPlan::find($validated['subscription_plan_id']);
+
+        // Handle "all branches" selection
+        if ($validated['branch_id'] === 'all') {
+            $branches = \App\Models\Branch::where('company_id', $companyId)->active()->get();
+
+            if ($branches->isEmpty()) {
+                return back()->with('error', 'No active branches found for this company.');
+            }
+
+            DB::transaction(function () use ($request, $validated, $branches, $plan) {
+                // Upload payment proof once
+                $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+
+                // Create subscription for each branch
+                foreach ($branches as $branch) {
+                    $subscription = BranchSubscription::create([
+                        'branch_id' => $branch->id,
+                        'subscription_plan_id' => $plan->id,
+                        'start_date' => now()->toDateString(),
+                        'end_date' => now()->addMonths((int)$validated['months'])->toDateString(),
+                        'status' => 'pending',
+                        'payment_proof' => $proofPath,
+                    ]);
+
+                    // Create payment record for each branch
+                    $subscription->payments()->create([
+                        'amount' => $plan->price * (int)$validated['months'],
+                        'payment_method' => 'bank_transfer',
+                        'proof_image' => $proofPath,
+                        'status' => 'pending',
+                    ]);
+                }
+            });
+
+            return redirect()->route('company.subscriptions.index', $companyId)
+                ->with('success', "Payment submitted for {$branches->count()} branch(es)! Waiting for admin confirmation.");
+        }
+
+        // Single branch purchase
+        $validated['branch_id'] = (int) $validated['branch_id'];
+
         // Verify branch belongs to company
         $branch = \App\Models\Branch::where('id', $validated['branch_id'])
             ->where('company_id', $companyId)
             ->firstOrFail();
-
-        $plan = \App\Models\SubscriptionPlan::find($validated['subscription_plan_id']);
 
         DB::transaction(function () use ($request, $validated, $branch, $plan) {
             // Upload payment proof
@@ -151,14 +283,14 @@ class SubscriptionController extends Controller
                 'branch_id' => $branch->id,
                 'subscription_plan_id' => $plan->id,
                 'start_date' => now()->toDateString(),
-                'end_date' => now()->addMonths($validated['months'])->toDateString(),
+                'end_date' => now()->addMonths((int)$validated['months'])->toDateString(),
                 'status' => 'pending',
                 'payment_proof' => $proofPath,
             ]);
 
             // Create payment record
             $subscription->payments()->create([
-                'amount' => $plan->price * $validated['months'],
+                'amount' => $plan->price * (int)$validated['months'],
                 'payment_method' => 'bank_transfer',
                 'proof_image' => $proofPath,
                 'status' => 'pending',

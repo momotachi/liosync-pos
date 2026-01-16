@@ -14,7 +14,7 @@ class Item extends Model
         'is_purchase', 'is_sales',
         'unit', 'unit_price', 'current_stock', 'min_stock_level',
         'hpp', 'selling_price', 'is_active', 'sku', 'barcode', 'description',
-        'company_id',
+        'company_id', 'branch_id',
     ];
 
     protected $casts = [
@@ -36,6 +36,11 @@ class Item extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function itemRecipes()
@@ -83,6 +88,11 @@ class Item extends Model
     public function scopeForCompany($query, int $companyId)
     {
         return $query->where('company_id', $companyId);
+    }
+
+    public function scopeForBranch($query, int $branchId)
+    {
+        return $query->where('branch_id', $branchId);
     }
 
     public function scopeActive($query)
@@ -153,14 +163,26 @@ class Item extends Model
     {
         if (!$this->is_purchase) throw new \Exception('Cannot decrease stock for non-purchase items.');
         $this->decrement('current_stock', $quantity);
-        $this->stockTransactions()->create(['type' => 'out', 'quantity' => $quantity, 'description' => $description, 'reference_id' => $referenceId]);
+        $this->stockTransactions()->create([
+            'type' => 'out',
+            'quantity' => $quantity,
+            'description' => $description,
+            'reference_id' => $referenceId,
+            'branch_id' => $this->branch_id,
+        ]);
     }
 
     public function increaseStock(float $quantity, string $description = null, int $referenceId = null): void
     {
         if (!$this->is_purchase) throw new \Exception('Cannot increase stock for non-purchase items.');
         $this->increment('current_stock', $quantity);
-        $this->stockTransactions()->create(['type' => 'in', 'quantity' => $quantity, 'description' => $description, 'reference_id' => $referenceId]);
+        $this->stockTransactions()->create([
+            'type' => 'in',
+            'quantity' => $quantity,
+            'description' => $description,
+            'reference_id' => $referenceId,
+            'branch_id' => $this->branch_id,
+        ]);
     }
 
     public function adjustStock(float $newQuantity, string $description = null): void
@@ -169,6 +191,11 @@ class Item extends Model
         $difference = $newQuantity - $this->current_stock;
         $this->current_stock = $newQuantity;
         $this->save();
-        $this->stockTransactions()->create(['type' => 'adjustment', 'quantity' => $difference, 'description' => $description]);
+        $this->stockTransactions()->create([
+            'type' => 'adjustment',
+            'quantity' => $difference,
+            'description' => $description,
+            'branch_id' => $this->branch_id,
+        ]);
     }
 }

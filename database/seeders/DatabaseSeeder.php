@@ -27,6 +27,9 @@ class DatabaseSeeder extends Seeder
         // 4. Seed subscription plans
         $this->call(SubscriptionPlanSeeder::class);
 
+        // 5. Seed branch settings
+        $this->call(BranchSettingSeeder::class);
+
         // Admin User (legacy)
         \App\Models\User::firstOrCreate(
             ['email' => 'admin@admin.com'],

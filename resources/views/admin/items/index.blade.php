@@ -8,8 +8,17 @@
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Items</h2>
         </div>
         <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button onclick="openImportModal()" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all">
+                <span class="material-symbols-outlined text-lg">upload_file</span>
+                Import
+            </button>
+            <a href="{{ route('admin.items.export', ['type' => $typeFilter]) }}"
+                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Export
+            </a>
             <a href="{{ route('admin.items.create') }}"
-                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all w-full sm:w-auto">
+                class="flex items-center justify-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all">
                 <span class="material-symbols-outlined text-lg">add</span>
                 Add New Item
             </a>
@@ -244,6 +253,69 @@
         </div>
     </div>
 
+    <!-- Import Modal -->
+    <div id="importModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 m-4 max-w-md w-full">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Import Items</h3>
+
+            @if(session('import_errors'))
+                <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <h4 class="text-sm font-semibold text-red-800 dark:text-red-400 mb-2">Import Errors:</h4>
+                    <ul class="text-xs text-red-700 dark:text-red-300 space-y-1 max-h-40 overflow-y-auto">
+                        @foreach(session('import_errors') as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="mb-4">
+                <a href="{{ route('admin.items.template') }}" class="inline-flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline mb-4">
+                    <span class="material-symbols-outlined text-lg">download</span>
+                    Download Template CSV
+                </a>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Gunakan template untuk format yang benar. Format yang didukung: CSV, XLS (dari export)
+                </p>
+            </div>
+
+            <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-lg text-blue-600 dark:text-blue-400">info</span>
+                    <div class="text-xs text-blue-700 dark:text-blue-300">
+                        <p class="font-medium mb-1">Import Mendukung:</p>
+                        <ul class="list-disc list-inside space-y-0.5">
+                            <li>File CSV dengan data item</li>
+                            <li>File XLS dari export (termasuk BOM/Resep)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ route('admin.items.import') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="mb-4">
+                    <label for="importFile" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Pilih File (CSV/XLS)
+                    </label>
+                    <input type="file" name="file" id="importFile" accept=".csv,.txt,.xls,.xlsx" required
+                        class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeImportModal()"
+                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function openRestockModal(itemId, itemName, unit) {
             const modal = document.getElementById('restockModal');
@@ -259,6 +331,18 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             document.getElementById('restockForm').reset();
+        }
+
+        function openImportModal() {
+            const modal = document.getElementById('importModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeImportModal() {
+            const modal = document.getElementById('importModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
     </script>
 @endsection

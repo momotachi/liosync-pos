@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.company')
 
 @section('title', 'Purchase Subscription')
 
@@ -13,12 +13,16 @@
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Branch</label>
         <select id="branchSelect" class="w-full md:w-1/2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
             <option value="">-- Choose a branch --</option>
+            <option value="all" data-current-plan="">🌐 All Branches</option>
             @foreach($branches as $branch)
                 <option value="{{ $branch->id }}" data-current-plan="{{ $branch->currentSubscription?->subscription_plan_id ?? '' }}">
                     {{ $branch->name }}
                 </option>
             @endforeach
         </select>
+        @if($branches->count() > 1)
+        <p class="text-xs text-gray-500 mt-1">Select "All Branches" to purchase subscription for all branches at once</p>
+        @endif
     </div>
 
     <!-- Plans Grid -->
@@ -100,9 +104,9 @@
                 <!-- Bank Details -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <p class="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">Transfer to:</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: BCA</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: 1234567890</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: Cycle POS System</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ \App\Models\Setting::get('bank_name', 'BCA') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ \App\Models\Setting::get('bank_account_number', '1234567890') }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ \App\Models\Setting::get('bank_account_name', 'Cycle POS System') }}</p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4">
@@ -121,6 +125,7 @@
 @push('scripts')
 <script>
     let currentPrice = 0;
+    const totalBranches = {{ $branches->count() }};
 
     function showPurchaseForm(planId, planName, price) {
         const branchSelect = document.getElementById('branchSelect');
@@ -130,17 +135,25 @@
             return;
         }
 
+        const isAllBranches = branchSelect.value === 'all';
         currentPrice = price;
         document.getElementById('modalPlanId').value = planId;
         document.getElementById('modalBranchId').value = branchSelect.value;
         document.getElementById('modalPlanName').textContent = planName;
-        document.getElementById('modalPlanPrice').textContent = 'Rp ' + formatNumber(price);
+
+        // Calculate total based on selection
+        const multiplier = isAllBranches ? totalBranches : 1;
+        const displayPrice = isAllBranches
+            ? `Rp ${formatNumber(price)} × ${totalBranches} branches = Rp ${formatNumber(price * totalBranches)}/month`
+            : `Rp ${formatNumber(price)}`;
+
+        document.getElementById('modalPlanPrice').textContent = displayPrice;
 
         // Update price options
-        document.getElementById('price1').textContent = formatNumber(price * 1);
-        document.getElementById('price3').textContent = formatNumber(price * 3);
-        document.getElementById('price6').textContent = formatNumber(price * 6);
-        document.getElementById('price12').textContent = formatNumber(price * 12);
+        document.getElementById('price1').textContent = formatNumber(price * multiplier * 1);
+        document.getElementById('price3').textContent = formatNumber(price * multiplier * 3);
+        document.getElementById('price6').textContent = formatNumber(price * multiplier * 6);
+        document.getElementById('price12').textContent = formatNumber(price * multiplier * 12);
 
         document.getElementById('purchaseModal').classList.remove('hidden');
         document.getElementById('purchaseModal').classList.add('flex');

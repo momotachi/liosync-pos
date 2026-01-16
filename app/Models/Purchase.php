@@ -8,6 +8,7 @@ class Purchase extends Model
 {
     protected $fillable = [
         'user_id',
+        'company_id',
         'branch_id',
         'supplier_name',
         'supplier_phone',
@@ -24,6 +25,11 @@ class Purchase extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function branch()

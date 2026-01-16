@@ -10,6 +10,43 @@ use Illuminate\Validation\Rules;
 class BranchUserController extends Controller
 {
     /**
+     * Check if user can manage branch users (Branch Admin, Company Admin with branch context, or Superadmin with branch context)
+     */
+    private function canManageBranchUsers($user)
+    {
+        // Branch Admin can always manage their branch users
+        if ($user->isBranchAdmin()) {
+            return true;
+        }
+
+        // Superadmin can manage users when viewing a branch
+        if ($user->isSuperAdmin() && session('active_branch_id')) {
+            return true;
+        }
+
+        // Company Admin can manage users when viewing a branch
+        if ($user->isCompanyAdmin() && session('active_branch_id')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the effective branch ID for the current user
+     */
+    private function getEffectiveBranchId($user)
+    {
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
+
+        // Use authenticated user's branch
+        return $user->branch_id;
+    }
+
+    /**
      * Display all users for the current branch.
      */
     public function index(Request $request)
@@ -17,13 +54,13 @@ class BranchUserController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$user->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($user)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
-        $branchId = $user->branch_id;
-        $companyId = $user->company_id;
+        $branchId = $this->getEffectiveBranchId($user);
+        $companyId = $user->company_id ?? session('company_id');
 
         // Get users for the branch
         if ($branchId) {
@@ -89,8 +126,8 @@ class BranchUserController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$user->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($user)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
@@ -110,8 +147,8 @@ class BranchUserController extends Controller
         /** @var User $authUser */
         $authUser = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$authUser->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($authUser)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
@@ -127,8 +164,8 @@ class BranchUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'password_hint' => $request->password_hint ?? $request->password,
-            'company_id' => $authUser->company_id,
-            'branch_id' => $authUser->branch_id,
+            'company_id' => $authUser->company_id ?? session('company_id'),
+            'branch_id' => $this->getEffectiveBranchId($authUser),
         ]);
 
         // Assign role
@@ -146,19 +183,21 @@ class BranchUserController extends Controller
         /** @var User $authUser */
         $authUser = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$authUser->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($authUser)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
+        $authCompanyId = $authUser->company_id ?? session('company_id');
+        $authBranchId = $this->getEffectiveBranchId($authUser);
+
         // Verify user belongs to the same company
-        if ($userData->company_id !== $authUser->company_id) {
+        if ($userData->company_id !== $authCompanyId) {
             abort(403, 'User does not belong to your company.');
         }
 
         // Only allow editing users from the same branch OR company-wide users (branch_id = null)
-        // Branch Admin can only edit their own branch users or company-wide users
-        if ($userData->branch_id !== null && $userData->branch_id !== $authUser->branch_id) {
+        if ($userData->branch_id !== null && $userData->branch_id !== $authBranchId) {
             abort(403, 'User does not belong to your branch.');
         }
 
@@ -183,18 +222,21 @@ class BranchUserController extends Controller
         /** @var User $authUser */
         $authUser = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$authUser->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($authUser)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
+        $authCompanyId = $authUser->company_id ?? session('company_id');
+        $authBranchId = $this->getEffectiveBranchId($authUser);
+
         // Verify user belongs to the same company
-        if ($userData->company_id !== $authUser->company_id) {
+        if ($userData->company_id !== $authCompanyId) {
             abort(403, 'User does not belong to your company.');
         }
 
         // Only allow editing users from the same branch OR company-wide users (branch_id = null)
-        if ($userData->branch_id !== null && $userData->branch_id !== $authUser->branch_id) {
+        if ($userData->branch_id !== null && $userData->branch_id !== $authBranchId) {
             abort(403, 'User does not belong to your branch.');
         }
 
@@ -245,13 +287,15 @@ class BranchUserController extends Controller
         /** @var User $authUser */
         $authUser = auth()->user();
 
-        // Only Branch Admin can access this
-        if (!$authUser->isBranchAdmin()) {
+        // Only Branch Admin or Superadmin with branch context can access this
+        if (!$this->canManageBranchUsers($authUser)) {
             abort(403, 'Access denied. Only Branch Admin can manage users.');
         }
 
+        $authBranchId = $this->getEffectiveBranchId($authUser);
+
         // Verify user belongs to the same branch
-        if ($userData->branch_id !== $authUser->branch_id) {
+        if ($userData->branch_id !== $authBranchId) {
             abort(403, 'User does not belong to your branch.');
         }
 
