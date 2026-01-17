@@ -47,7 +47,7 @@
         <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
             <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">lock</span>
+                    <span class="material-symbols-outlined text-lg">lock</span>
                     Change Password
                 </h3>
             </div>
@@ -117,17 +117,17 @@
                 <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         @if($group === 'general')
-                            <span class="material-symbols-outlined text-primary">settings</span>
+                            <span class="material-symbols-outlined text-lg">settings</span>
                         @elseif($group === 'pos')
-                            <span class="material-symbols-outlined text-primary">point_of_sale</span>
+                            <span class="material-symbols-outlined text-lg">point_of_sale</span>
                         @elseif($group === 'receipt')
-                            <span class="material-symbols-outlined text-primary">receipt</span>
+                            <span class="material-symbols-outlined text-lg">receipt</span>
                         @elseif($group === 'tax')
-                            <span class="material-symbols-outlined text-primary">percent</span>
+                            <span class="material-symbols-outlined text-lg">percent</span>
                         @elseif($group === 'inventory')
-                            <span class="material-symbols-outlined text-primary">inventory</span>
+                            <span class="material-symbols-outlined text-lg">inventory</span>
                         @else
-                            <span class="material-symbols-outlined text-primary">tune</span>
+                            <span class="material-symbols-outlined text-lg">tune</span>
                         @endif
                         {{ ucfirst($group) }}
                     </h3>
