@@ -38,6 +38,7 @@ Route::middleware(['auth', 'restrict.cashier', 'subscription'])->group(function 
     // Settings
     Route::get('/branch/settings', [\App\Http\Controllers\AdminSettingsController::class, 'index'])->name('admin.settings.index');
     Route::put('/branch/settings', [\App\Http\Controllers\AdminSettingsController::class, 'update'])->name('admin.settings.update');
+    Route::post('/branch/settings/password', [\App\Http\Controllers\AdminSettingsController::class, 'handlePasswordChange'])->name('admin.settings.password');
     Route::post('/branch/settings/reset', [\App\Http\Controllers\AdminSettingsController::class, 'reset'])->name('admin.settings.reset');
 
     // Reports

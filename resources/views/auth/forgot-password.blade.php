@@ -76,7 +76,7 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
         }
 
         .forgot-card {
@@ -128,109 +128,64 @@
             font-size: 0.875rem;
         }
 
-        .status-message {
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border: 1px solid #bbf7d0;
+        .info-card {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
             border-radius: 12px;
-            padding: 1rem;
+            padding: 1.5rem;
             margin-bottom: 1.5rem;
+        }
+
+        .info-card .icon {
             text-align: center;
+            margin-bottom: 1rem;
         }
 
-        .status-message p {
-            color: #166534;
-            font-size: 0.875rem;
-            margin: 0;
+        .info-card .icon .material-icons-round {
+            font-size: 48px;
+            color: #f59e0b;
         }
 
-        .error-message {
-            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-            border: 1px solid #fecaca;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .error-message p {
-            color: #991b1b;
-            font-size: 0.875rem;
-            margin: 0;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 0.875rem;
+        .info-card h3 {
+            text-align: center;
+            font-size: 1.125rem;
             font-weight: 600;
-            color: #374151;
+            color: #92400e;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-card p {
+            color: #78350f;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .info-card ul {
+            margin-top: 1rem;
+            padding-left: 1.25rem;
+        }
+
+        .info-card li {
+            color: #78350f;
+            font-size: 0.875rem;
             margin-bottom: 0.5rem;
         }
 
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-wrapper .material-icons-round {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            font-size: 20px;
-            transition: color 0.3s;
-        }
-
-        .input-wrapper:focus-within .material-icons-round {
-            color: #f97316;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.875rem 3rem 0.875rem 3rem;
-            border: 2px solid #e5e7eb;
+        .contact-info {
+            background: #f3f4f6;
             border-radius: 12px;
-            font-size: 0.9375rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .contact-info p {
+            color: #374151;
+            font-size: 0.875rem;
+            margin: 0.5rem 0;
+        }
+
+        .contact-info p strong {
             color: #111827;
-            background: white;
-            transition: all 0.3s;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .form-input::placeholder {
-            color: #9ca3af;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #f97316;
-            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.4);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
         }
 
         .back-link {
@@ -260,25 +215,6 @@
             background: rgba(17, 24, 39, 0.95);
             border-color: rgba(55, 65, 81, 0.5);
         }
-
-        html.dark .form-label {
-            color: #e5e7eb;
-        }
-
-        html.dark .form-input {
-            background: rgba(31, 41, 55, 0.8);
-            border-color: #374151;
-            color: #f9fafb;
-        }
-
-        html.dark .form-input::placeholder {
-            color: #6b7280;
-        }
-
-        html.dark .form-input:focus {
-            border-color: #f97316;
-            background: rgba(31, 41, 55, 1);
-        }
     </style>
 </head>
 <body>
@@ -298,48 +234,28 @@
             <!-- Header Text -->
             <div class="header-text">
                 <h2>Forgot Password?</h2>
-                <p>Enter your email address and we'll send you a link to reset your password.</p>
+                <p>Please contact your administrator to reset your password.</p>
             </div>
 
-            <!-- Status Message -->
-            @if(session('status'))
-                <div class="status-message">
-                    <p>{{ session('status') }}</p>
+            <!-- Info Card -->
+            <div class="info-card">
+                <div class="icon">
+                    <span class="material-icons-round">support_agent</span>
+</div>
+                <h3>Password Reset Procedure</h3>
+                <p>To reset your password, please follow these steps:</p>
+                <ul>
+                    <li>Contact your company administrator</li>
+                    <li>Request a password reset</li>
+li>Administrator will reset your password</li>
+                    <li>After reset, you can change your password in Profile/Settings</li>
+                </ul>
+
+                <div class="contact-info">
+                    <p><strong>Why this process?</strong></p>
+                    <p>This ensures security and prevents unauthorized access to your account.</p>
                 </div>
-            @endif
-
-            <!-- Error Message -->
-            @if($errors->any())
-                <div class="error-message">
-                    @foreach($errors->all() as $error)
-                        <p>{{ $error }}</p>
-                    @endforeach
-                </div>
-            @endif
-
-            <!-- Form -->
-            <form method="POST" action="{{ route('password.email') }}">
-                @csrf
-
-                <div class="form-group">
-                    <label class="form-label" for="email">Email Address</label>
-                    <div class="input-wrapper">
-                        <input class="form-input"
-                            id="email"
-                            name="email"
-                            value="{{ old('email') }}"
-                            placeholder="Enter your email"
-                            type="email"
-                            required
-                            autocomplete="email">
-                        <span class="material-icons-round">email</span>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn">
-                    Send Password Reset Link
-                </button>
-            </form>
+            </div>
 
             <!-- Back to Login -->
             <div class="back-link">

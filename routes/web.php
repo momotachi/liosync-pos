@@ -34,11 +34,8 @@ Route::get('/logout', [LoginController::class, 'logout'])->name('logout.get');
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register'])->name('register.process');
 
-// Password Reset Routes
+// Password Reset Routes (Contact Admin - No Email)
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
-Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
 // POS Routes (Protected - All authenticated users)
 Route::middleware(['auth'])->group(function () {

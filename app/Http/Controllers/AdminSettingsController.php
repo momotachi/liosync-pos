@@ -123,17 +123,52 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Get the effective branch ID for settings.
+     * Show the settings page.
      */
-    private function getEffectiveBranchId()
+    public function index()
     {
-        // Check for active branch context (Superadmin/Company Admin viewing branch)
-        if (session('active_branch_id')) {
-            return session('active_branch_id');
+        $this->authorizeSettingsAccess();
+
+        $settings = Setting::grouped();
+
+        return view('admin.settings.index', compact('settings'));
+    }
+
+    /**
+     * Handle password change request.
+     */
+    public function handlePasswordChange(Request $request)
+    {
+        $this->authorizeSettingsAccess();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        // Verify current password
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'current_password' => 'The current password is incorrect.',
+                ]);
         }
 
-        // Use authenticated user's branch
-        $user = Auth::user();
-        return $user ? $user->branch_id : null;
+        // Update password
+        $user->password = Hash::make($validated['new_password']);
+        $user->setRememberToken(null); // Invalidate remember tokens
+        $user->save();
+
+        return redirect()
+            ->route('admin.settings.index')
+            ->with('password_success', 'Your password has been changed successfully!');
     }
-}
+
+    /**
+     * Update settings.
+     */
+    public function update(Request $request)

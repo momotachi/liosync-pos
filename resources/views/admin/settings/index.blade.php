@@ -43,6 +43,75 @@
     @method('PUT')
 
     <div class="space-y-6">
+        <!-- Change Password Section -->
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+            <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">lock</span>
+                    Change Password
+                </h3>
+            </div>
+
+            <div class="p-6">
+                <form method="POST" action="{{ route('admin.settings.password') }}" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+                            <input type="password" name="current_password" id="current_password" required
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            @error('current_password')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                            <input type="password" name="new_password" id="new_password" required
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            @error('new_password')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="new_password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+                            <input type="password" name="new_password_confirmation" id="new_password_confirmation" required
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            @error('new_password_confirmation')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    @if(session('password_success'))
+                        <div class="p-4 mb-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                            <p class="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">check_circle</span>
+                                {{ session('password_success') }}
+                            </p>
+                        </div>
+                    @endif
+
+                    @if(session('password_error'))
+                        <div class="p-4 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <p class="text-sm text-red-800 dark:text-red-200 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-lg">error</span>
+                                {{ session('password_error') }}
+                            </p>
+                        </div>
+                    @endif
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg shadow-lg shadow-primary-200 dark:shadow-none transition-colors flex items-center gap-2">
+                            <span class="material-symbols-outlined">save</span>
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         @foreach($settings as $group => $settingsCollection)
             <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
                 <div class="px-6 py-4 border-b border-border-light dark:border-border-dark bg-gray-50 dark:bg-gray-800/50">
