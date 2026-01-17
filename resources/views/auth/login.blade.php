@@ -576,7 +576,7 @@
             <!-- Footer -->
             <div class="footer-text">
                 <p>Don't have an account? <a href="{{ route('register') }}">Sign Up</a></p>
-                <p>Forgot your password? <a href="#">Reset here</a></p>
+                <p>Forgot your password? <a href="{{ route('password.request') }}">Reset here</a></p>
                 <p class="version-text">Liosync POS v1.0.0</p>
             </div>
         </div>
