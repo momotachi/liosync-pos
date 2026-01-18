@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class AdminSettingsController extends Controller
@@ -123,15 +124,18 @@ class AdminSettingsController extends Controller
     }
 
     /**
-     * Show the settings page.
+     * Get the effective branch ID.
      */
-    public function index()
+    private function getEffectiveBranchId()
     {
-        $this->authorizeSettingsAccess();
+        // Check for active branch context (Superadmin/Company Admin viewing branch)
+        if (session('active_branch_id')) {
+            return session('active_branch_id');
+        }
 
-        $settings = Setting::grouped();
-
-        return view('admin.settings.index', compact('settings'));
+        // Use authenticated user's branch
+        $user = auth()->user();
+        return $user ? $user->branch_id : null;
     }
 
     /**
@@ -167,8 +171,4 @@ class AdminSettingsController extends Controller
             ->route('admin.settings.index')
             ->with('password_success', 'Your password has been changed successfully!');
     }
-
-    /**
-     * Update settings.
-     */
-    public function update(Request $request)
+}
