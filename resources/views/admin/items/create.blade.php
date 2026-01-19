@@ -15,6 +15,24 @@
 <form method="POST" action="{{ route('admin.items.store') }}" enctype="multipart/form-data" class="space-y-6">
     @csrf
 
+    @if ($errors->any())
+        <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded-lg shadow-sm p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <span class="material-symbols-outlined text-red-500">error</span>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Please fix the following errors:</h3>
+                    <ul class="mt-2 text-sm text-red-700 dark:text-red-400 list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column: Item Info -->
         <div class="lg:col-span-2 space-y-6">

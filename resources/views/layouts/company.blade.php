@@ -81,6 +81,11 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* Alpine.js x-cloak: hide elements until Alpine is ready */
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 
     @stack('styles')
@@ -90,7 +95,7 @@
     x-data="{ sidebarOpen: false, sidebarCollapsed: false }">
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-show="sidebarOpen" 
+    <div x-cloak x-show="sidebarOpen && window.innerWidth < 768"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -107,7 +112,7 @@
     </button>
 
     <!-- Sidebar -->
-    <aside :class="[
+    <aside x-cloak :class="[
             sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
             sidebarCollapsed ? 'md:w-20' : 'md:w-64'
         ]"

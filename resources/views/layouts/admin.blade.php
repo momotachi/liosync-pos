@@ -90,6 +90,11 @@
             scrollbar-width: none;
             /* Firefox */
         }
+
+        /* Alpine.js x-cloak: hide elements until Alpine is ready */
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 
     @stack('styles')
@@ -100,7 +105,7 @@
     x-data="{ sidebarOpen: false, sidebarCollapsed: false }">
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    <div x-cloak x-show="sidebarOpen && window.innerWidth < 768" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="sidebarOpen = false"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"></div>
@@ -113,7 +118,7 @@
     </button>
 
     <!-- Sidebar -->
-    <aside x-show="sidebarOpen || window.innerWidth >= 768" x-transition:enter="transition ease-out duration-300"
+    <aside x-cloak x-show="sidebarOpen || window.innerWidth >= 768" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
         x-transition:leave-end="-translate-x-full" :class="[
