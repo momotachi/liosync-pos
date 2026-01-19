@@ -873,6 +873,14 @@ class AdminItemController extends Controller
                     }
 
                     if (!empty(array_filter($rowData))) {
+                        // Ensure row data matches header count
+                        if (count($rowData) > count($headers)) {
+                            $rowData = array_slice($rowData, 0, count($headers));
+                        } elseif (count($rowData) < count($headers)) {
+                            // Pad with empty strings
+                            $rowData = $rowData + array_fill(count($rowData), count($headers) - count($rowData), '');
+                        }
+
                         $combined = array_combine($headers, $rowData);
                         if ($combined !== false) {
                             $tableData[] = $combined;
@@ -890,6 +898,13 @@ class AdminItemController extends Controller
         } else {
             return redirect()->back()->with('error', 'Format file tidak didukung. Gunakan CSV atau XLS.');
         }
+
+        // Debug log
+        \Log::info('Import started', [
+            'items_count' => count($itemsData),
+            'bom_count' => count($bomData),
+            'sample_item' => $itemsData[0] ?? null
+        ]);
 
         $imported = 0;
         $recipesImported = 0;
