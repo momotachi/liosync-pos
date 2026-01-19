@@ -197,6 +197,19 @@ class PosController extends Controller
 
                 // Automatic Stock Deduction (BOM) - Only deduct if order is paid/completed
                 if (!$skipPayment) {
+                    // For items with both is_purchase AND is_sales = true, deduct the item's own stock
+                    if ($product->is_purchase && $product->is_sales) {
+                        StockTransaction::create([
+                            'item_id' => $product->id,
+                            'type' => 'out',
+                            'quantity' => $item['quantity'],
+                            'description' => "Sold in Order #{$order->id} ({$product->name})",
+                            'reference_id' => $order->id,
+                            'branch_id' => $branchId,
+                        ]);
+                    }
+
+                    // Deduct BOM ingredients if the product has recipes
                     foreach ($product->itemRecipes as $recipe) {
                         $qtyNeeded = $recipe->quantity_required * $item['quantity'];
 
