@@ -825,6 +825,12 @@ class AdminItemController extends Controller
             // Parse XLS file (HTML table format from our export)
             $html = file_get_contents($filePath);
 
+            // Debug: log HTML length
+            \Log::info('XLS file loaded', [
+                'html_length' => strlen($html),
+                'html_preview' => substr($html, 0, 500)
+            ]);
+
             // Convert to UTF-8 if needed
             if (!mb_check_encoding($html, 'UTF-8')) {
                 $html = mb_convert_encoding($html, 'UTF-8', 'ISO-8859-1');
@@ -840,8 +846,16 @@ class AdminItemController extends Controller
 
             $tables = $dom->getElementsByTagName('table');
 
+            \Log::info('Tables found', ['count' => $tables->length]);
+
             foreach ($tables as $tableIndex => $table) {
                 $rows = $table->getElementsByTagName('tr');
+
+                \Log::info('Processing table', [
+                    'table_index' => $tableIndex,
+                    'rows_count' => $rows->length
+                ]);
+
                 $headers = [];
                 $tableData = [];
 
@@ -861,6 +875,12 @@ class AdminItemController extends Controller
                         }
                     }
                 }
+
+                \Log::info('Headers extracted', [
+                    'table_index' => $tableIndex,
+                    'headers' => $headers,
+                    'headers_count' => count($headers)
+                ]);
 
                 // Get data rows
                 for ($i = 1; $i < $rows->length; $i++) {
