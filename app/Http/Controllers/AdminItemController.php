@@ -636,7 +636,7 @@ class AdminItemController extends Controller
             echo "<div class='sheet-title'>DAFTAR ITEM</div>\n";
             echo "<table>\n";
 
-            // Header Row
+            // Header Row - MUST match import template headers
             echo "<tr>\n";
             echo "<th>Nama Item</th>\n";
             echo "<th>Kategori</th>\n";
@@ -648,8 +648,7 @@ class AdminItemController extends Controller
             echo "<th>Stok</th>\n";
             echo "<th>Min Stok</th>\n";
             echo "<th>Harga Jual</th>\n";
-            echo "<th>HPP</th>\n";
-            echo "<th>Status</th>\n";
+            echo "<th>Aktif</th>\n";
             echo "<th>Deskripsi</th>\n";
             echo "</tr>\n";
 
@@ -740,19 +739,19 @@ class AdminItemController extends Controller
             // Add BOM for UTF-8
             fprintf($file, "\xEF\xBB\xBF");
 
-            // CSV Header with instructions
+            // CSV Header - MUST match exactly what import expects
             fputcsv($file, [
-                'Nama Item *',
+                'Nama Item',
                 'Kategori',
                 'SKU',
                 'Barcode',
-                'Tipe * (Purchase/Sales/Both)',
+                'Tipe',
                 'Harga Beli',
                 'Satuan',
-                'Stok Awal',
+                'Stok',
                 'Min Stok',
                 'Harga Jual',
-                'Aktif (Yes/No)',
+                'Aktif',
                 'Deskripsi'
             ]);
 
@@ -768,7 +767,7 @@ class AdminItemController extends Controller
                 '100',
                 '20',
                 '',
-                '',
+                'Yes',
                 'Tepung terigu untuk roti'
             ]);
 
@@ -785,6 +784,21 @@ class AdminItemController extends Controller
                 '25000',
                 'Yes',
                 'Roti bakar dengan topping coklat'
+            ]);
+
+            fputcsv($file, [
+                'Aqua Botol',
+                'Minuman',
+                'AQUA001',
+                '89960001',
+                'Both',
+                '3000',
+                'botol',
+                '50',
+                '10',
+                '5000',
+                'Yes',
+                'Aqua botol 600ml - bisa dibeli dan dijual'
             ]);
 
             fclose($file);
@@ -934,7 +948,11 @@ class AdminItemController extends Controller
                     $minStock = !empty($row['Min Stok'] ?? $row['min_stok'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Min Stok'] ?? $row['min_stok'])) : 0;
                     $sellingPrice = !empty($row['Harga Jual'] ?? $row['harga_jual'] ?? $row['selling_price'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Harga Jual'] ?? $row['harga_jual'] ?? $row['selling_price'])) : 0;
                     $hpp = !empty($row['HPP'] ?? $row['hpp'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['HPP'] ?? $row['hpp'])) : 0;
-                    $isActive = strtolower(trim($row['Status'] ?? $row['status'] ?? $row['Aktif'] ?? $row['aktif'] ?? $row['is_active'] ?? 'yes')) === 'aktif' || strtolower(trim($row['Status'] ?? $row['status'] ?? $row['Aktif'] ?? $row['aktif'] ?? 'yes')) === 'yes' || strtolower(trim($row['Status'] ?? $row['status'] ?? $row['Aktif'] ?? $row['aktif'] ?? 'yes')) === '1' || !empty($row['Status'] ?? $row['Aktif'] ?? $row['aktif']);
+
+                    // Parse active status - supports: Aktif/aktif/Yes/yes/1/true (case-insensitive)
+                    $activeValue = strtolower(trim($row['Status'] ?? $row['status'] ?? $row['Aktif'] ?? $row['aktif'] ?? $row['is_active'] ?? 'yes'));
+                    $isActive = in_array($activeValue, ['aktif', 'yes', '1', 'true', 'on']);
+
                     $description = trim($row['Deskripsi'] ?? $row['deskripsi'] ?? $row['description'] ?? '');
 
                     // Validate required fields
