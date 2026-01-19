@@ -580,7 +580,7 @@ class AdminItemController extends Controller
     }
 
     /**
-     * Export items to Excel format including BOM.
+     * Export items to CSV format (simple, compatible with import).
      */
     public function export(Request $request)
     {
@@ -603,54 +603,34 @@ class AdminItemController extends Controller
 
         $items = $query->get();
 
-        // Get items with recipes (BOM)
-        $itemIds = $items->pluck('id')->toArray();
-        $recipes = \App\Models\ItemRecipe::with(['parentItem', 'ingredient'])
-            ->whereIn('parent_item_id', $itemIds)
-            ->get();
-
-        $filename = 'items_' . date('Y-m-d_His') . '.xls';
+        $filename = 'items_export_' . date('Y-m-d_His') . '.csv';
 
         $headers = [
-            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
         ];
 
-        $callback = function() use ($items, $recipes) {
-            echo "\xEF\xBB\xBF";
-            echo "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n";
-            echo "<head>\n";
-            echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
-            echo "<style>\n";
-            echo "table { border-collapse: collapse; margin-bottom: 20px; }\n";
-            echo "td, th { border: 1px solid #ddd; padding: 8px; }\n";
-            echo "th { background-color: #4CAF50; color: white; font-weight: bold; }\n";
-            echo ".sheet-title { font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #333; }\n";
-            echo "</style>\n";
-            echo "</head>\n";
-            echo "<body>\n";
+        $callback = function() use ($items) {
+            $file = fopen('php://output', 'w');
 
-            // ITEMS TABLE
-            echo "<div class='sheet-title'>DAFTAR ITEM</div>\n";
-            echo "<table>\n";
+            // Add BOM for UTF-8
+            fprintf($file, "\xEF\xBB\xBF");
 
-            // Header Row - MUST match import template headers
-            echo "<tr>\n";
-            echo "<th>Nama Item</th>\n";
-            echo "<th>Kategori</th>\n";
-            echo "<th>SKU</th>\n";
-            echo "<th>Barcode</th>\n";
-            echo "<th>Tipe</th>\n";
-            echo "<th>Harga Beli</th>\n";
-            echo "<th>Satuan</th>\n";
-            echo "<th>Stok</th>\n";
-            echo "<th>Min Stok</th>\n";
-            echo "<th>Harga Jual</th>\n";
-            echo "<th>Aktif</th>\n";
-            echo "<th>Deskripsi</th>\n";
-            echo "</tr>\n";
+            // CSV Header - SAME as template
+            fputcsv($file, [
+                'Nama Item',
+                'Kategori',
+                'SKU',
+                'Barcode',
+                'Tipe',
+                'Harga Beli',
+                'Satuan',
+                'Stok',
+                'Min Stok',
+                'Harga Jual',
+                'Aktif',
+                'Deskripsi'
+            ]);
 
             // Data Rows
             foreach ($items as $item) {
@@ -663,57 +643,23 @@ class AdminItemController extends Controller
                     $type = 'Sales';
                 }
 
-                echo "<tr>\n";
-                echo "<td>" . htmlspecialchars($item->name) . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->category->name ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->sku ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->barcode ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($type) . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->unit_price, 0, ',', '.') : '-') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? htmlspecialchars($item->unit) : '-') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->current_stock, 2, ',', '.') : '-') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->min_stock_level, 2, ',', '.') : '-') . "</td>\n";
-                echo "<td>" . ($item->is_sales ? number_format($item->selling_price, 0, ',', '.') : '-') . "</td>\n";
-                echo "<td>" . number_format($item->hpp, 0, ',', '.') . "</td>\n";
-                echo "<td>" . ($item->is_active ? 'Aktif' : 'Non-Aktif') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->description ?? '') . "</td>\n";
-                echo "</tr>\n";
+                fputcsv($file, [
+                    $item->name,
+                    $item->category->name ?? '',
+                    $item->sku ?? '',
+                    $item->barcode ?? '',
+                    $type,
+                    $item->is_purchase ? $item->unit_price : '',
+                    $item->is_purchase ? $item->unit : '',
+                    $item->is_purchase ? $item->current_stock : '',
+                    $item->is_purchase ? $item->min_stock_level : '',
+                    $item->is_sales ? $item->selling_price : '',
+                    $item->is_active ? 'Yes' : 'No',
+                    $item->description ?? ''
+                ]);
             }
 
-            echo "</table>\n";
-
-            // BOM/RECIPE TABLE
-            if ($recipes->count() > 0) {
-                echo "<div class='sheet-title'>BILL OF MATERIALS (RESEP)</div>\n";
-                echo "<table>\n";
-
-                // BOM Header Row
-                echo "<tr>\n";
-                echo "<th>Nama Produk</th>\n";
-                echo "<th>SKU Produk</th>\n";
-                echo "<th>Bahan Baku</th>\n";
-                echo "<th>SKU Bahan</th>\n";
-                echo "<th>Jumlah</th>\n";
-                echo "<th>Satuan</th>\n";
-                echo "</tr>\n";
-
-                // BOM Data Rows
-                foreach ($recipes as $recipe) {
-                    echo "<tr>\n";
-                    echo "<td>" . htmlspecialchars($recipe->parentItem->name ?? '') . "</td>\n";
-                    echo "<td>" . htmlspecialchars($recipe->parentItem->sku ?? '') . "</td>\n";
-                    echo "<td>" . htmlspecialchars($recipe->ingredient->name ?? '') . "</td>\n";
-                    echo "<td>" . htmlspecialchars($recipe->ingredient->sku ?? '') . "</td>\n";
-                    echo "<td>" . number_format($recipe->quantity_required, 3, ',', '.') . "</td>\n";
-                    echo "<td>" . htmlspecialchars($recipe->ingredient->unit ?? '') . "</td>\n";
-                    echo "</tr>\n";
-                }
-
-                echo "</table>\n";
-            }
-
-            echo "</body>\n";
-            echo "</html>\n";
+            fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
