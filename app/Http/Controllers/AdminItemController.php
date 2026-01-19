@@ -580,7 +580,7 @@ class AdminItemController extends Controller
     }
 
     /**
-     * Export items to CSV format (simple, compatible with import).
+     * Export items to Excel format (XLS - HTML table that Excel opens).
      */
     public function export(Request $request)
     {
@@ -603,34 +603,45 @@ class AdminItemController extends Controller
 
         $items = $query->get();
 
-        $filename = 'items_export_' . date('Y-m-d_His') . '.csv';
+        $filename = 'items_export_' . date('Y-m-d_His') . '.xls';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'application/vnd.ms-excel',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ];
 
         $callback = function() use ($items) {
-            $file = fopen('php://output', 'w');
+            echo "\xEF\xBB\xBF";
+            echo "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n";
+            echo "<head>\n";
+            echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
+            echo "<meta name=\"generator\" content=\"Lio Sync\">\n";
+            echo "<style>\n";
+            echo "table { border-collapse: collapse; }\n";
+            echo "td, th { border: 1px solid #ccc; padding: 5px; }\n";
+            echo "th { background-color: #4CAF50; color: white; font-weight: bold; }\n";
+            echo "</style>\n";
+            echo "</head>\n";
+            echo "<body>\n";
+            echo "<table>\n";
 
-            // Add BOM for UTF-8
-            fprintf($file, "\xEF\xBB\xBF");
-
-            // CSV Header - SAME as template
-            fputcsv($file, [
-                'Nama Item',
-                'Kategori',
-                'SKU',
-                'Barcode',
-                'Tipe',
-                'Harga Beli',
-                'Satuan',
-                'Stok',
-                'Min Stok',
-                'Harga Jual',
-                'Aktif',
-                'Deskripsi'
-            ]);
+            // Header Row - SAME as import template
+            echo "<tr>\n";
+            echo "<th>Nama Item</th>\n";
+            echo "<th>Kategori</th>\n";
+            echo "<th>SKU</th>\n";
+            echo "<th>Barcode</th>\n";
+            echo "<th>Tipe</th>\n";
+            echo "<th>Harga Beli</th>\n";
+            echo "<th>Satuan</th>\n";
+            echo "<th>Stok</th>\n";
+            echo "<th>Min Stok</th>\n";
+            echo "<th>Harga Jual</th>\n";
+            echo "<th>Aktif</th>\n";
+            echo "<th>Deskripsi</th>\n";
+            echo "</tr>\n";
 
             // Data Rows
             foreach ($items as $item) {
@@ -643,111 +654,123 @@ class AdminItemController extends Controller
                     $type = 'Sales';
                 }
 
-                fputcsv($file, [
-                    $item->name,
-                    $item->category->name ?? '',
-                    $item->sku ?? '',
-                    $item->barcode ?? '',
-                    $type,
-                    $item->is_purchase ? $item->unit_price : '',
-                    $item->is_purchase ? $item->unit : '',
-                    $item->is_purchase ? $item->current_stock : '',
-                    $item->is_purchase ? $item->min_stock_level : '',
-                    $item->is_sales ? $item->selling_price : '',
-                    $item->is_active ? 'Yes' : 'No',
-                    $item->description ?? ''
-                ]);
+                echo "<tr>\n";
+                echo "<td>" . htmlspecialchars($item->name) . "</td>\n";
+                echo "<td>" . htmlspecialchars($item->category->name ?? '') . "</td>\n";
+                echo "<td>" . htmlspecialchars($item->sku ?? '') . "</td>\n";
+                echo "<td>" . htmlspecialchars($item->barcode ?? '') . "</td>\n";
+                echo "<td>" . htmlspecialchars($type) . "</td>\n";
+                echo "<td>" . ($item->is_purchase ? number_format($item->unit_price, 0, ',', '.') : '') . "</td>\n";
+                echo "<td>" . ($item->is_purchase ? htmlspecialchars($item->unit) : '') . "</td>\n";
+                echo "<td>" . ($item->is_purchase ? number_format($item->current_stock, 2, ',', '.') : '') . "</td>\n";
+                echo "<td>" . ($item->is_purchase ? number_format($item->min_stock_level, 2, ',', '.') : '') . "</td>\n";
+                echo "<td>" . ($item->is_sales ? number_format($item->selling_price, 0, ',', '.') : '') . "</td>\n";
+                echo "<td>" . ($item->is_active ? 'Yes' : 'No') . "</td>\n";
+                echo "<td>" . htmlspecialchars($item->description ?? '') . "</td>\n";
+                echo "</tr>\n";
             }
 
-            fclose($file);
+            echo "</table>\n";
+            echo "</body>\n";
+            echo "</html>\n";
         };
 
         return response()->stream($callback, 200, $headers);
     }
 
     /**
-     * Download import template.
+     * Download import template (Excel format).
      */
     public function downloadTemplate()
     {
         $this->authorizeItemAccess();
 
-        $filename = 'items_import_template.csv';
+        $filename = 'items_import_template.xls';
 
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'application/vnd.ms-excel',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
         $callback = function() {
-            $file = fopen('php://output', 'w');
+            echo "\xEF\xBB\xBF";
+            echo "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n";
+            echo "<head>\n";
+            echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
+            echo "<style>\n";
+            echo "table { border-collapse: collapse; }\n";
+            echo "td, th { border: 1px solid #ccc; padding: 5px; }\n";
+            echo "th { background-color: #4CAF50; color: white; font-weight: bold; }\n";
+            echo "</style>\n";
+            echo "</head>\n";
+            echo "<body>\n";
+            echo "<table>\n";
 
-            // Add BOM for UTF-8
-            fprintf($file, "\xEF\xBB\xBF");
+            // Header Row
+            echo "<tr>\n";
+            echo "<th>Nama Item</th>\n";
+            echo "<th>Kategori</th>\n";
+            echo "<th>SKU</th>\n";
+            echo "<th>Barcode</th>\n";
+            echo "<th>Tipe</th>\n";
+            echo "<th>Harga Beli</th>\n";
+            echo "<th>Satuan</th>\n";
+            echo "<th>Stok</th>\n";
+            echo "<th>Min Stok</th>\n";
+            echo "<th>Harga Jual</th>\n";
+            echo "<th>Aktif</th>\n";
+            echo "<th>Deskripsi</th>\n";
+            echo "</tr>\n";
 
-            // CSV Header - MUST match exactly what import expects
-            fputcsv($file, [
-                'Nama Item',
-                'Kategori',
-                'SKU',
-                'Barcode',
-                'Tipe',
-                'Harga Beli',
-                'Satuan',
-                'Stok',
-                'Min Stok',
-                'Harga Jual',
-                'Aktif',
-                'Deskripsi'
-            ]);
+            // Sample data rows
+            echo "<tr>\n";
+            echo "<td>Tepung Terigu</td>\n";
+            echo "<td>Bahan Baku</td>\n";
+            echo "<td></td>\n";
+            echo "<td></td>\n";
+            echo "<td>Purchase</td>\n";
+            echo "<td>15000</td>\n";
+            echo "<td>kg</td>\n";
+            echo "<td>100</td>\n";
+            echo "<td>20</td>\n";
+            echo "<td></td>\n";
+            echo "<td>Yes</td>\n";
+            echo "<td>Tepung terigu untuk roti</td>\n";
+            echo "</tr>\n";
 
-            // Add sample data rows
-            fputcsv($file, [
-                'Tepung Terigu',
-                'Bahan Baku',
-                '',
-                '',
-                'Purchase',
-                '15000',
-                'kg',
-                '100',
-                '20',
-                '',
-                'Yes',
-                'Tepung terigu untuk roti'
-            ]);
+            echo "<tr>\n";
+            echo "<td>Roti Bakar Coklat</td>\n";
+            echo "<td>Produk</td>\n";
+            echo "<td>RB001</td>\n";
+            echo "<td>89910001</td>\n";
+            echo "<td>Sales</td>\n";
+            echo "<td></td>\n";
+            echo "<td></td>\n";
+            echo "<td></td>\n";
+            echo "<td></td>\n";
+            echo "<td>25000</td>\n";
+            echo "<td>Yes</td>\n";
+            echo "<td>Roti bakar dengan topping coklat</td>\n";
+            echo "</tr>\n";
 
-            fputcsv($file, [
-                'Roti Bakar Coklat',
-                'Produk',
-                'RB001',
-                '89910001',
-                'Sales',
-                '',
-                '',
-                '',
-                '',
-                '25000',
-                'Yes',
-                'Roti bakar dengan topping coklat'
-            ]);
+            echo "<tr>\n";
+            echo "<td>Aqua Botol</td>\n";
+            echo "<td>Minuman</td>\n";
+            echo "<td>AQUA001</td>\n";
+            echo "<td>89960001</td>\n";
+            echo "<td>Both</td>\n";
+            echo "<td>3000</td>\n";
+            echo "<td>botol</td>\n";
+            echo "<td>50</td>\n";
+            echo "<td>10</td>\n";
+            echo "<td>5000</td>\n";
+            echo "<td>Yes</td>\n";
+            echo "<td>Aqua botol 600ml - bisa dibeli dan dijual</td>\n";
+            echo "</tr>\n";
 
-            fputcsv($file, [
-                'Aqua Botol',
-                'Minuman',
-                'AQUA001',
-                '89960001',
-                'Both',
-                '3000',
-                'botol',
-                '50',
-                '10',
-                '5000',
-                'Yes',
-                'Aqua botol 600ml - bisa dibeli dan dijual'
-            ]);
-
-            fclose($file);
+            echo "</table>\n";
+            echo "</body>\n";
+            echo "</html>\n";
         };
 
         return response()->stream($callback, 200, $headers);
