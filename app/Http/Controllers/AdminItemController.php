@@ -145,7 +145,7 @@ class AdminItemController extends Controller
             // Common fields
             'name' => 'required|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
 
             // Type flags (at least one must be true)
             'is_purchase' => 'boolean',
@@ -372,7 +372,7 @@ class AdminItemController extends Controller
             // Common fields
             'name' => 'required|string|max:255',
             'category_id' => 'nullable|exists:categories,id',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:10240',
 
             // Type flags
             'is_purchase' => 'boolean',
