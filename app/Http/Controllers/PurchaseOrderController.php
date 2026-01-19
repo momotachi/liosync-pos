@@ -183,7 +183,7 @@ class PurchaseOrderController extends Controller
                     'note' => $item['note'] ?? null,
                 ]);
 
-                // Add Stock (IN transaction)
+                // Add Stock (IN transaction) - Observer will handle stock update automatically
                 StockTransaction::create([
                     'item_id' => $material->id,
                     'type' => 'in',
@@ -193,9 +193,6 @@ class PurchaseOrderController extends Controller
                     'reference_id' => $purchase->id,
                     'branch_id' => $branchId,
                 ]);
-
-                // Update current stock
-                $material->increment('current_stock', $item['quantity']);
             }
 
             DB::commit();
