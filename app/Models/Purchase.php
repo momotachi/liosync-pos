@@ -16,6 +16,7 @@ class Purchase extends Model
         'payment_method',
         'status',
         'notes',
+        'category',
         'cancelled_at',
         'cancelled_by',
         'cancel_reason',
@@ -40,6 +41,22 @@ class Purchase extends Model
     public function scopeCancelled($query)
     {
         return $query->whereNotNull('cancelled_at');
+    }
+
+    /**
+     * Scope to filter only inventory purchases
+     */
+    public function scopeInventory($query)
+    {
+        return $query->where('category', 'inventory');
+    }
+
+    /**
+     * Scope to filter only operational purchases
+     */
+    public function scopeOperational($query)
+    {
+        return $query->where('category', 'operational');
     }
 
     /**

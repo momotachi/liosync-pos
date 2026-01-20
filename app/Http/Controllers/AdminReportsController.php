@@ -700,15 +700,27 @@ class AdminReportsController extends Controller
         }
         $totalPurchases = $purchaseQuery->sum('total_amount');
 
+        // Get operational expenses (only active operational purchases)
+        $operationalQuery = Purchase::active()->operational()->whereBetween('created_at', [$from, $to]);
+        if ($branchId) {
+            $operationalQuery->where('branch_id', $branchId);
+        }
+        $totalOperational = $operationalQuery->sum('total_amount');
+
         $grossProfit = $totalRevenue - $totalHpp;
+        $netProfit = $grossProfit - $totalOperational;
         $profitMargin = $totalRevenue > 0 ? ($grossProfit / $totalRevenue) * 100 : 0;
+        $netProfitMargin = $totalRevenue > 0 ? ($netProfit / $totalRevenue) * 100 : 0;
 
         return [
             'total_revenue' => $totalRevenue,
             'total_hpp' => $totalHpp,
             'total_purchases' => $totalPurchases,
+            'total_operational' => $totalOperational,
             'gross_profit' => $grossProfit,
+            'net_profit' => $netProfit,
             'profit_margin' => $profitMargin,
+            'net_profit_margin' => $netProfitMargin,
             'total_orders' => $totalOrders,
         ];
     }

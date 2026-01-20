@@ -32,47 +32,121 @@
     </header>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
         <!-- Total Revenue -->
-        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Omset</p>
-                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-500 mt-2">Rp {{ number_format($metrics['total_revenue'], 0, ',', '.') }}</h3>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Omset</p>
+                    <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-500 mt-1">Rp {{ number_format($metrics['total_revenue'], 0, ',', '.') }}</h3>
                 </div>
-                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                    <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400">payments</span>
+                <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                    <span class="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-sm">payments</span>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">{{ $metrics['total_orders'] }} transaksi</p>
         </div>
 
         <!-- Total HPP -->
-        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total HPP</p>
-                    <h3 class="text-2xl font-bold text-red-600 dark:text-red-500 mt-2">Rp {{ number_format($metrics['total_hpp'], 0, ',', '.') }}</h3>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total HPP</p>
+                    <h3 class="text-lg font-bold text-red-600 dark:text-red-500 mt-1">Rp {{ number_format($metrics['total_hpp'], 0, ',', '.') }}</h3>
                 </div>
-                <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                    <span class="material-symbols-outlined text-red-600 dark:text-red-400">trending_down</span>
+                <div class="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                    <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-sm">trending_down</span>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">Modal barang terjual</p>
         </div>
 
         <!-- Gross Profit -->
-        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Profit Kotor</p>
-                    <h3 class="text-2xl font-bold {{ $metrics['gross_profit'] >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500' }} mt-2">Rp {{ number_format($metrics['gross_profit'], 0, ',', '.') }}</h3>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Profit Kotor</p>
+                    <h3 class="text-lg font-bold {{ $metrics['gross_profit'] >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500' }} mt-1">Rp {{ number_format($metrics['gross_profit'], 0, ',', '.') }}</h3>
                 </div>
-                <div class="p-3 {{ $metrics['gross_profit'] >= 0 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-red-100 dark:bg-red-900/30' }} rounded-lg">
-                    <span class="material-symbols-outlined {{ $metrics['gross_profit'] >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }}">account_balance_wallet</span>
+                <div class="p-2 {{ $metrics['gross_profit'] >= 0 ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-red-100 dark:bg-red-900/30' }} rounded-lg">
+                    <span class="material-symbols-outlined {{ $metrics['gross_profit'] >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400' }} text-sm">account_balance_wallet</span>
                 </div>
             </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">Margin: {{ number_format($metrics['profit_margin'], 1, ',', '.') }}%</p>
+        </div>
+
+        <!-- Operational -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Operational</p>
+                    <h3 class="text-lg font-bold text-orange-600 dark:text-orange-500 mt-1">Rp {{ number_format($metrics['total_operational'] ?? 0, 0, ',', '.') }}</h3>
+                </div>
+                <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <span class="material-symbols-outlined text-orange-600 dark:text-orange-400 text-sm">receipt_long</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Profit -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Profit Bersih</p>
+                    <h3 class="text-lg font-bold {{ $metrics['net_profit'] >= 0 ? 'text-purple-600 dark:text-purple-500' : 'text-red-600 dark:text-red-500' }} mt-1">Rp {{ number_format($metrics['net_profit'], 0, ',', '.') }}</h3>
+                </div>
+                <div class="p-2 {{ $metrics['net_profit'] >= 0 ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-red-100 dark:bg-red-900/30' }} rounded-lg">
+                    <span class="material-symbols-outlined {{ $metrics['net_profit'] >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-red-600 dark:text-red-400' }} text-sm">savings</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Summary Detail -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Gross Profit Detail -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rincian Profit Kotor</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Total Omset</span>
+                    <span class="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($metrics['total_revenue'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Total HPP</span>
+                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">- Rp {{ number_format($metrics['total_hpp'], 0, ',', '.') }}</span>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-base font-bold text-gray-900 dark:text-white">Profit Kotor</span>
+                    <span class="text-base font-bold {{ $metrics['gross_profit'] >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500' }}">Rp {{ number_format($metrics['gross_profit'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Margin Kotor</span>
+                    <span class="text-xs font-semibold {{ $metrics['profit_margin'] >= 0 ? 'text-blue-600 dark:text-blue-500' : 'text-red-600 dark:text-red-500' }}">{{ number_format($metrics['profit_margin'], 1, ',', '.') }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Profit Detail -->
+        <div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Rincian Profit Bersih</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Profit Kotor</span>
+                    <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">Rp {{ number_format($metrics['gross_profit'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Biaya Operational</span>
+                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400">- Rp {{ number_format($metrics['total_operational'] ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-base font-bold text-gray-900 dark:text-white">Profit Bersih</span>
+                    <span class="text-base font-bold {{ $metrics['net_profit'] >= 0 ? 'text-purple-600 dark:text-purple-500' : 'text-red-600 dark:text-red-500' }}">Rp {{ number_format($metrics['net_profit'], 0, ',', '.') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Margin Bersih</span>
+                    <span class="text-xs font-semibold {{ $metrics['net_profit_margin'] >= 0 ? 'text-purple-600 dark:text-purple-500' : 'text-red-600 dark:text-red-500' }}">{{ number_format($metrics['net_profit_margin'], 1, ',', '.') }}%</span>
+                </div>
+            </div>
         </div>
     </div>
 

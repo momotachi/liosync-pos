@@ -522,6 +522,15 @@
                         class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-black/20 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary"
                         placeholder="Enter phone number (optional)">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Kategori Pembelian</label>
+                    <select x-model="purchaseCategory"
+                        class="block w-full px-4 py-2.5 bg-gray-50 dark:bg-black/20 border-0 ring-1 ring-inset ring-gray-200 dark:ring-gray-700 rounded-xl text-gray-900 dark:text-white focus:ring-2 focus:ring-inset focus:ring-primary">
+                        <option value="inventory">Inventory (Bahan Baku)</option>
+                        <option value="operational">Operational (Biaya Operasional)</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Pilih "Operational" untuk biaya operasional seperti listrik, ATK, dll.</p>
+                </div>
             </div>
             <!-- Footer Actions -->
             <div class="p-5 pt-0 flex gap-3">
@@ -699,6 +708,7 @@
                 showNoteModal: false,
                 supplierName: '',
                 supplierPhone: '',
+                purchaseCategory: 'inventory',
                 poNote: '',
 
                 // Item Modal State
@@ -837,7 +847,8 @@
                         payment_method: this.paymentMethod,
                         supplier_name: this.supplierName || null,
                         supplier_phone: this.supplierPhone || null,
-                        notes: this.poNote || null
+                        notes: this.poNote || null,
+                        category: this.purchaseCategory || 'inventory'
                     };
 
                     console.log('Sending payload:', payload);
@@ -849,6 +860,7 @@
                             this.cart = [];
                             this.supplierName = '';
                             this.supplierPhone = '';
+                            this.purchaseCategory = 'inventory';
                             this.poNote = '';
                             this.showPaymentModal = false;
                             this.isLoading = false;
