@@ -179,7 +179,7 @@ class AdminItemController extends Controller
             'min_stock_level' => 'required_if:is_purchase,true|numeric|min:0',
 
             // Sales fields (required if is_sales = true)
-            'selling_price' => 'required_if:is_sales,true|numeric|min:0',
+            'selling_price' => 'nullable|required_if:is_sales,true|numeric|min:0',
             'is_active' => 'boolean',
             'sku' => 'nullable|string|max:100',
             'barcode' => 'nullable|string|max:100|unique:items,barcode',
@@ -406,7 +406,7 @@ class AdminItemController extends Controller
             'min_stock_level' => 'required_if:is_purchase,true|numeric|min:0',
 
             // Sales fields
-            'selling_price' => 'required_if:is_sales,true|numeric|min:0',
+            'selling_price' => 'nullable|required_if:is_sales,true|numeric|min:0',
             'is_active' => 'boolean',
             'sku' => 'nullable|string|max:100',
             'barcode' => 'nullable|string|max:100|unique:items,barcode,' . $id,

@@ -130,6 +130,7 @@ class PurchaseOrderController extends Controller
             'supplier_name' => 'nullable|string|max:255',
             'supplier_phone' => 'nullable|string|max:20',
             'notes' => 'nullable|string|max:1000',
+            'category' => 'nullable|in:inventory,operational',
         ]);
 
         try {
@@ -158,6 +159,7 @@ class PurchaseOrderController extends Controller
                 'payment_method' => $request->payment_method,
                 'status' => 'completed',
                 'notes' => $request->notes,
+                'category' => $request->category ?? 'inventory',
             ]);
 
             foreach ($request->items as $item) {
@@ -183,16 +185,19 @@ class PurchaseOrderController extends Controller
                     'note' => $item['note'] ?? null,
                 ]);
 
-                // Add Stock (IN transaction) - Observer will handle stock update automatically
-                StockTransaction::create([
-                    'item_id' => $material->id,
-                    'type' => 'in',
-                    'quantity' => $item['quantity'],
-                    'description' => "Purchased in PO #{$purchase->id}" .
-                        ($request->supplier_name ? " from {$request->supplier_name}" : ''),
-                    'reference_id' => $purchase->id,
-                    'branch_id' => $branchId,
-                ]);
+                // Add Stock (IN transaction) only for inventory purchases
+                // Operational purchases (expenses) should not update stock
+                if (($request->category ?? 'inventory') === 'inventory') {
+                    StockTransaction::create([
+                        'item_id' => $material->id,
+                        'type' => 'in',
+                        'quantity' => $item['quantity'],
+                        'description' => "Purchased in PO #{$purchase->id}" .
+                            ($request->supplier_name ? " from {$request->supplier_name}" : ''),
+                        'reference_id' => $purchase->id,
+                        'branch_id' => $branchId,
+                    ]);
+                }
             }
 
             DB::commit();

@@ -78,32 +78,34 @@ class DashboardController extends Controller
         // Determine date range
         [$from, $to] = $this->getDateRange($period, $startDate, $endDate);
 
-        // 1. Revenue
-        $revenueQuery = Order::whereBetween('created_at', [$from, $to]);
+        // 1. Revenue (exclude cancelled orders)
+        $revenueQuery = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $revenueQuery->where('branch_id', $branchId);
         }
         $revenue = $revenueQuery->sum('total_amount');
 
-        // 2. Orders Count (Transactions)
-        $ordersQuery = Order::whereBetween('created_at', [$from, $to]);
+        // 2. Orders Count (Transactions) - exclude cancelled
+        $ordersQuery = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $ordersQuery->where('branch_id', $branchId);
         }
         $ordersCount = $ordersQuery->count();
 
-        // 3. Items Sold Count
+        // 3. Items Sold Count (exclude cancelled orders)
         $itemsSoldQuery = OrderItem::whereHas('order', function ($q) use ($from, $to, $branchId) {
-            $q->whereBetween('created_at', [$from, $to]);
+            $q->whereBetween('created_at', [$from, $to])
+                ->whereNull('cancelled_at');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
         });
         $itemsSold = $itemsSoldQuery->sum('quantity');
 
-        // 4. Top Selling Items - only include items that exist
+        // 4. Top Selling Items - exclude cancelled orders
         $topSellingQuery = OrderItem::whereHas('order', function ($q) use ($from, $to, $branchId) {
-            $q->whereBetween('created_at', [$from, $to]);
+            $q->whereBetween('created_at', [$from, $to])
+                ->whereNull('cancelled_at');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
@@ -116,8 +118,8 @@ class DashboardController extends Controller
             ->take(5);
         $topSelling = $topSellingQuery->get();
 
-        // 5. Total Purchases (from Purchase Orders)
-        $totalPurchasesQuery = Purchase::whereBetween('created_at', [$from, $to]);
+        // 5. Total Purchases (exclude cancelled)
+        $totalPurchasesQuery = Purchase::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $totalPurchasesQuery->where('branch_id', $branchId);
         }
@@ -132,9 +134,10 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // 7. Top Purchase Items - based on Purchase Orders
+        // 7. Top Purchase Items - exclude cancelled purchases
         $topPurchaseItemsQuery = PurchaseItem::whereHas('purchase', function ($q) use ($from, $to, $branchId) {
-            $q->whereBetween('purchases.created_at', [$from, $to]);
+            $q->whereBetween('purchases.created_at', [$from, $to])
+                ->whereNull('purchases.cancelled_at');
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
