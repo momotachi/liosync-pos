@@ -94,7 +94,7 @@
                                 <div style="font-style: italic; font-size: 11px;">* {{ $item->note }}</div>
                             @endif
                         </div>
-                        <div class="bold">{{ $settings['currency_symbol'] }}{{ number_format($item->subtotal, 0) }}</div>
+                        <div class="bold">{{ $settings['currency_symbol'] }} {{ number_format($item->subtotal, 0, ',', '.') }}</div>
                     </div>
                 </div>
             @endforeach
@@ -104,7 +104,7 @@
         <div class="mt-4 pt-2 border-t">
             <div class="flex justify-between bold large">
                 <span>TOTAL:</span>
-                <span>{{ $settings['currency_symbol'] }}{{ number_format($order->total_amount, 0) }}</span>
+                <span>{{ $settings['currency_symbol'] }} {{ number_format($order->total_amount, 0, ',', '.') }}</span>
             </div>
         </div>
 

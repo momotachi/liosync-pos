@@ -85,9 +85,9 @@
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
                                     <p class="font-medium text-gray-900">{{ $item->item->name }}</p>
-                                    <p class="text-sm text-gray-500">{{ $item->quantity }} x {{ $settings['currency_symbol'] }}{{ number_format($item->price, 2) }}</p>
+                                    <p class="text-sm text-gray-500">{{ $item->quantity }} x {{ $settings['currency_symbol'] }} {{ number_format($item->price, 0, ',', '.') }}</p>
                                 </div>
-                                <p class="receipt-font font-semibold text-gray-900">{{ $settings['currency_symbol'] }}{{ number_format($item->subtotal, 2) }}</p>
+                                <p class="receipt-font font-semibold text-gray-900">{{ $settings['currency_symbol'] }} {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                             </div>
                             @if($item->note)
                                 <p class="text-xs text-amber-600 italic mt-1">* {{ $item->note }}</p>
@@ -102,7 +102,7 @@
                 <div class="receipt-font space-y-2">
                     <div class="flex justify-between">
                         <span class="text-gray-600">Subtotal:</span>
-                        <span>{{ $settings['currency_symbol'] }}{{ number_format($order->total_amount, 2) }}</span>
+                        <span>{{ $settings['currency_symbol'] }} {{ number_format($order->total_amount, 0, ',', '.') }}</span>
                     </div>
 
                     @if($settings['tax_rate'] > 0)
@@ -113,13 +113,13 @@
                         @endphp
                         <div class="flex justify-between">
                             <span class="text-gray-600">{{ $settings['tax_name'] }} ({{ $settings['tax_rate'] }}%):</span>
-                            <span>{{ $settings['currency_symbol'] }}{{ number_format($taxAmount, 2) }}</span>
+                            <span>{{ $settings['currency_symbol'] }} {{ number_format($taxAmount, 0, ',', '.') }}</span>
                         </div>
                     @endif
 
                     <div class="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
                         <span>Total:</span>
-                        <span class="text-emerald-600">{{ $settings['currency_symbol'] }}{{ number_format($order->total_amount, 2) }}</span>
+                        <span class="text-emerald-600">{{ $settings['currency_symbol'] }} {{ number_format($order->total_amount, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>
