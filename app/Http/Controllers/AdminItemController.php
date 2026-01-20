@@ -39,6 +39,21 @@ class AdminItemController extends Controller
     }
 
     /**
+     * Generate redirect with preserved filter
+     */
+    private function redirectWithFilter($message = null, $type = 'success')
+    {
+        $typeFilter = session('items_filter_type', 'all');
+        $redirect = redirect()->route('admin.items.index', ['type' => $typeFilter]);
+
+        if ($message) {
+            $redirect = $redirect->with($type, $message);
+        }
+
+        return $redirect;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -66,7 +81,12 @@ class AdminItemController extends Controller
             }
         }
 
-        $typeFilter = $request->get('type', 'all');
+        // Get filter from request or session (allow override via URL parameter)
+        $typeFilter = $request->get('type', session('items_filter_type', 'all'));
+
+        // Store current filter in session for persistence after redirects
+        session(['items_filter_type' => $typeFilter]);
+
         $search = $request->get('search');
 
         // Load category and itemRecipes for HPP calculation
@@ -235,7 +255,7 @@ class AdminItemController extends Controller
             }
         });
 
-        return redirect()->route('admin.items.index')->with('success', 'Item created successfully!');
+        return $this->redirectWithFilter('Item created successfully!');
     }
 
     /**
@@ -470,7 +490,7 @@ class AdminItemController extends Controller
                 ]);
             }
 
-            return redirect()->route('admin.items.index')->with('success', 'Item updated successfully!');
+            return $this->redirectWithFilter('Item updated successfully!');
         } catch (\Exception $e) {
             // Return JSON error response for AJAX requests
             if ($request->expectsJson()) {
@@ -497,14 +517,12 @@ class AdminItemController extends Controller
 
         // Check if item has orders
         if ($item->orderItems()->exists()) {
-            return redirect()->route('admin.items.index')
-                ->with('error', 'Cannot delete item with order history.');
+            return $this->redirectWithFilter('Cannot delete item with order history.', 'error');
         }
 
         // Check if item is used in recipes
         if ($item->usedInItems()->exists()) {
-            return redirect()->route('admin.items.index')
-                ->with('error', 'Cannot delete item that is used in other item recipes.');
+            return $this->redirectWithFilter('Cannot delete item that is used in other item recipes.', 'error');
         }
 
         // Delete image if exists
@@ -518,7 +536,7 @@ class AdminItemController extends Controller
         // Soft delete item
         $item->delete();
 
-        return redirect()->route('admin.items.index')->with('success', 'Item deleted successfully!');
+        return $this->redirectWithFilter('Item deleted successfully!');
     }
 
     /**
@@ -533,8 +551,7 @@ class AdminItemController extends Controller
         $item = Item::where('branch_id', $branchId)->findOrFail($id);
 
         if (!$item->is_purchase) {
-            return redirect()->route('admin.items.index')
-                ->with('error', 'Cannot restock a non-purchase item.');
+            return $this->redirectWithFilter('Cannot restock a non-purchase item.', 'error');
         }
 
         $validated = $request->validate([
@@ -547,7 +564,7 @@ class AdminItemController extends Controller
             $validated['notes'] ?? "Restocked: {$validated['quantity']} {$item->unit}"
         );
 
-        return redirect()->route('admin.items.index')->with('success', "Added {$validated['quantity']} {$item->unit} of {$item->name}");
+        return $this->redirectWithFilter("Added {$validated['quantity']} {$item->unit} of {$item->name}");
     }
 
     /**
@@ -562,8 +579,7 @@ class AdminItemController extends Controller
         $item = Item::where('branch_id', $branchId)->findOrFail($id);
 
         if (!$item->is_purchase) {
-            return redirect()->route('admin.items.index')
-                ->with('error', 'Cannot adjust stock for a non-purchase item.');
+            return $this->redirectWithFilter('Cannot adjust stock for a non-purchase item.', 'error');
         }
 
         $validated = $request->validate([
@@ -576,7 +592,7 @@ class AdminItemController extends Controller
             $validated['notes'] ?? "Stock adjusted"
         );
 
-        return redirect()->route('admin.items.index')->with('success', "Stock for {$item->name} adjusted to {$validated['new_quantity']} {$item->unit}");
+        return $this->redirectWithFilter("Stock for {$item->name} adjusted to {$validated['new_quantity']} {$item->unit}");
     }
 
     /**
