@@ -580,570 +580,86 @@ class AdminItemController extends Controller
     }
 
     /**
-     * Export items to Excel format (XLS - HTML table that Excel opens).
+     * Export items to Excel format with BOM.
      */
     public function export(Request $request)
     {
         $this->authorizeItemAccess();
 
         $branchId = $this->getEffectiveBranchId();
-
         $typeFilter = $request->get('type', 'all');
 
-        $query = Item::with('category')->where('branch_id', $branchId);
+        $filename = 'items_export_' . date('Y-m-d_His') . '.xlsx';
 
-        // Apply type filter
-        if ($typeFilter === 'purchase') {
-            $query->purchaseItems();
-        } elseif ($typeFilter === 'sales') {
-            $query->salesItems();
-        } elseif ($typeFilter === 'both') {
-            $query->both();
-        }
-
-        $items = $query->get();
-
-        $filename = 'items_export_' . date('Y-m-d_His') . '.xls';
-
-        $headers = [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Pragma' => 'no-cache',
-            'Expires' => '0',
-        ];
-
-        $callback = function() use ($items) {
-            echo "\xEF\xBB\xBF";
-            echo "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n";
-            echo "<head>\n";
-            echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
-            echo "<meta name=\"generator\" content=\"Lio Sync\">\n";
-            echo "<style>\n";
-            echo "table { border-collapse: collapse; }\n";
-            echo "td, th { border: 1px solid #ccc; padding: 5px; }\n";
-            echo "th { background-color: #4CAF50; color: white; font-weight: bold; }\n";
-            echo "</style>\n";
-            echo "</head>\n";
-            echo "<body>\n";
-            echo "<table>\n";
-
-            // Header Row - SAME as import template
-            echo "<tr>\n";
-            echo "<th>Nama Item</th>\n";
-            echo "<th>Kategori</th>\n";
-            echo "<th>SKU</th>\n";
-            echo "<th>Barcode</th>\n";
-            echo "<th>Tipe</th>\n";
-            echo "<th>Harga Beli</th>\n";
-            echo "<th>Satuan</th>\n";
-            echo "<th>Stok</th>\n";
-            echo "<th>Min Stok</th>\n";
-            echo "<th>Harga Jual</th>\n";
-            echo "<th>Aktif</th>\n";
-            echo "<th>Deskripsi</th>\n";
-            echo "</tr>\n";
-
-            // Data Rows
-            foreach ($items as $item) {
-                $type = '';
-                if ($item->is_purchase && $item->is_sales) {
-                    $type = 'Both';
-                } elseif ($item->is_purchase) {
-                    $type = 'Purchase';
-                } elseif ($item->is_sales) {
-                    $type = 'Sales';
-                }
-
-                echo "<tr>\n";
-                echo "<td>" . htmlspecialchars($item->name) . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->category->name ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->sku ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->barcode ?? '') . "</td>\n";
-                echo "<td>" . htmlspecialchars($type) . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->unit_price, 0, ',', '.') : '') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? htmlspecialchars($item->unit) : '') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->current_stock, 2, ',', '.') : '') . "</td>\n";
-                echo "<td>" . ($item->is_purchase ? number_format($item->min_stock_level, 2, ',', '.') : '') . "</td>\n";
-                echo "<td>" . ($item->is_sales ? number_format($item->selling_price, 0, ',', '.') : '') . "</td>\n";
-                echo "<td>" . ($item->is_active ? 'Yes' : 'No') . "</td>\n";
-                echo "<td>" . htmlspecialchars($item->description ?? '') . "</td>\n";
-                echo "</tr>\n";
-            }
-
-            echo "</table>\n";
-            echo "</body>\n";
-            echo "</html>\n";
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\ItemsWithBomExport($branchId, $typeFilter),
+            $filename
+        );
     }
 
     /**
-     * Download import template (Excel format).
+     * Download import template (Excel format with BOM).
      */
     public function downloadTemplate()
     {
         $this->authorizeItemAccess();
 
-        $filename = 'items_import_template.xls';
+        $filename = 'items_import_template.xlsx';
 
-        $headers = [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() {
-            echo "\xEF\xBB\xBF";
-            echo "<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\" xmlns=\"http://www.w3.org/TR/REC-html40\">\n";
-            echo "<head>\n";
-            echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n";
-            echo "<style>\n";
-            echo "table { border-collapse: collapse; }\n";
-            echo "td, th { border: 1px solid #ccc; padding: 5px; }\n";
-            echo "th { background-color: #4CAF50; color: white; font-weight: bold; }\n";
-            echo "</style>\n";
-            echo "</head>\n";
-            echo "<body>\n";
-            echo "<table>\n";
-
-            // Header Row
-            echo "<tr>\n";
-            echo "<th>Nama Item</th>\n";
-            echo "<th>Kategori</th>\n";
-            echo "<th>SKU</th>\n";
-            echo "<th>Barcode</th>\n";
-            echo "<th>Tipe</th>\n";
-            echo "<th>Harga Beli</th>\n";
-            echo "<th>Satuan</th>\n";
-            echo "<th>Stok</th>\n";
-            echo "<th>Min Stok</th>\n";
-            echo "<th>Harga Jual</th>\n";
-            echo "<th>Aktif</th>\n";
-            echo "<th>Deskripsi</th>\n";
-            echo "</tr>\n";
-
-            // Sample data rows
-            echo "<tr>\n";
-            echo "<td>Tepung Terigu</td>\n";
-            echo "<td>Bahan Baku</td>\n";
-            echo "<td></td>\n";
-            echo "<td></td>\n";
-            echo "<td>Purchase</td>\n";
-            echo "<td>15000</td>\n";
-            echo "<td>kg</td>\n";
-            echo "<td>100</td>\n";
-            echo "<td>20</td>\n";
-            echo "<td></td>\n";
-            echo "<td>Yes</td>\n";
-            echo "<td>Tepung terigu untuk roti</td>\n";
-            echo "</tr>\n";
-
-            echo "<tr>\n";
-            echo "<td>Roti Bakar Coklat</td>\n";
-            echo "<td>Produk</td>\n";
-            echo "<td>RB001</td>\n";
-            echo "<td>89910001</td>\n";
-            echo "<td>Sales</td>\n";
-            echo "<td></td>\n";
-            echo "<td></td>\n";
-            echo "<td></td>\n";
-            echo "<td></td>\n";
-            echo "<td>25000</td>\n";
-            echo "<td>Yes</td>\n";
-            echo "<td>Roti bakar dengan topping coklat</td>\n";
-            echo "</tr>\n";
-
-            echo "<tr>\n";
-            echo "<td>Aqua Botol</td>\n";
-            echo "<td>Minuman</td>\n";
-            echo "<td>AQUA001</td>\n";
-            echo "<td>89960001</td>\n";
-            echo "<td>Both</td>\n";
-            echo "<td>3000</td>\n";
-            echo "<td>botol</td>\n";
-            echo "<td>50</td>\n";
-            echo "<td>10</td>\n";
-            echo "<td>5000</td>\n";
-            echo "<td>Yes</td>\n";
-            echo "<td>Aqua botol 600ml - bisa dibeli dan dijual</td>\n";
-            echo "</tr>\n";
-
-            echo "</table>\n";
-            echo "</body>\n";
-            echo "</html>\n";
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\ItemsWithBomTemplateExport(),
+            $filename
+        );
     }
 
     /**
-     * Import items from CSV/Excel (including BOM).
+     * Import items from Excel file with BOM.
      */
     public function import(Request $request)
     {
         $this->authorizeItemAccess();
 
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240', // Max 10MB
+            'file' => 'required|file|mimes:xlsx,xls|max:10240', // Max 10MB - Excel only (for multiple sheets)
         ]);
 
         $branchId = $this->getEffectiveBranchId();
         $companyId = session('company_id') ?? auth()->user()->company_id;
 
-        $file = $request->file('file');
-        $filePath = $file->getRealPath();
+        $import = new \App\Imports\ItemsWithBomImport($branchId, $companyId);
 
-        // Determine file type and parse accordingly
-        $extension = $file->getClientOriginalExtension();
-
-        $itemsData = [];
-        $bomData = [];
-
-        if ($extension === 'csv' || $extension === 'txt') {
-            // Parse CSV file
-            if (($handle = fopen($filePath, 'r')) !== false) {
-                // Skip BOM if present
-                $bom = "\xEF\xBB\xBF";
-                $firstBytes = fread($handle, 3);
-                if ($firstBytes !== $bom) {
-                    rewind($handle);
-                }
-
-                $header = fgetcsv($handle); // Get header row
-
-                while (($data = fgetcsv($handle)) !== false) {
-                    if (empty(array_filter($data))) continue; // Skip empty rows
-                    $combined = array_combine($header, $data);
-                    if ($combined !== false) {
-                        $itemsData[] = $combined;
-                    }
-                }
-
-                fclose($handle);
-            }
-        } elseif ($extension === 'xls' || $extension === 'xlsx') {
-            // Parse XLS file (HTML table format from our export)
-            $html = file_get_contents($filePath);
-
-            // Debug: log HTML length
-            \Log::info('XLS file loaded', [
-                'html_length' => strlen($html),
-                'html_preview' => substr($html, 0, 500)
-            ]);
-
-            // Convert to UTF-8 if needed
-            if (!mb_check_encoding($html, 'UTF-8')) {
-                $html = mb_convert_encoding($html, 'UTF-8', 'ISO-8859-1');
-            }
-
-            // Use DOMDocument to parse HTML tables
-            // Disable XXE vulnerability protection
-            libxml_disable_entity_loader(true);
-            libxml_use_internal_errors(true);
-            $dom = new \DOMDocument();
-            $dom->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-            libxml_clear_errors();
-
-            $tables = $dom->getElementsByTagName('table');
-
-            \Log::info('Tables found', ['count' => $tables->length]);
-
-            foreach ($tables as $tableIndex => $table) {
-                $rows = $table->getElementsByTagName('tr');
-
-                \Log::info('Processing table', [
-                    'table_index' => $tableIndex,
-                    'rows_count' => $rows->length
-                ]);
-
-                $headers = [];
-                $tableData = [];
-
-                // Get headers from first row
-                if ($rows->length > 0) {
-                    $firstRow = $rows->item(0);
-                    $thElements = $firstRow->getElementsByTagName('th');
-                    if ($thElements->length > 0) {
-                        foreach ($thElements as $th) {
-                            $headers[] = trim($th->textContent);
-                        }
-                    } else {
-                        // Try td elements if no th
-                        $tdElements = $firstRow->getElementsByTagName('td');
-                        foreach ($tdElements as $td) {
-                            $headers[] = trim($td->textContent);
-                        }
-                    }
-                }
-
-                \Log::info('Headers extracted', [
-                    'table_index' => $tableIndex,
-                    'headers' => $headers,
-                    'headers_count' => count($headers)
-                ]);
-
-                // Get data rows
-                for ($i = 1; $i < $rows->length; $i++) {
-                    $row = $rows->item($i);
-                    $tdElements = $row->getElementsByTagName('td');
-
-                    $rowData = [];
-                    foreach ($tdElements as $td) {
-                        $rowData[] = trim($td->textContent);
-                    }
-
-                    if (!empty(array_filter($rowData))) {
-                        // Ensure row data matches header count
-                        if (count($rowData) > count($headers)) {
-                            $rowData = array_slice($rowData, 0, count($headers));
-                        } elseif (count($rowData) < count($headers)) {
-                            // Pad with empty strings
-                            $rowData = $rowData + array_fill(count($rowData), count($headers) - count($rowData), '');
-                        }
-
-                        $combined = array_combine($headers, $rowData);
-                        if ($combined !== false) {
-                            $tableData[] = $combined;
-                        }
-                    }
-                }
-
-                // First table is Items, second is BOM
-                if ($tableIndex === 0) {
-                    $itemsData = $tableData;
-                } elseif ($tableIndex === 1) {
-                    $bomData = $tableData;
-                }
-            }
-        } else {
-            return redirect()->back()->with('error', 'Format file tidak didukung. Gunakan CSV atau XLS.');
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import($import, $request->file('file'));
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Import failed: ' . $e->getMessage());
         }
 
-        // Debug log
-        \Log::info('Import started', [
-            'items_count' => count($itemsData),
-            'bom_count' => count($bomData),
-            'sample_item' => $itemsData[0] ?? null
-        ]);
+        $imported = $import->getImported();
+        $updated = $import->getUpdated();
+        $skipped = $import->getSkipped();
+        $recipesImported = $import->getRecipesImported();
+        $failed = $import->getFailed();
+        $errors = $import->getErrors();
 
-        $imported = 0;
-        $recipesImported = 0;
-        $failed = 0;
-        $errors = [];
-
-        // Map to store created items by name/SKU for BOM reference
-        $itemMap = [];
-
-        DB::transaction(function() use ($itemsData, $bomData, $branchId, $companyId, &$imported, &$recipesImported, &$failed, &$errors, &$itemMap) {
-            // Import Items first
-            foreach ($itemsData as $index => $row) {
-                try {
-                    $rowNumber = $index + 2; // +2 because header is row 1 and array is 0-indexed
-
-                    // Clean and validate data
-                    $name = trim($row['Nama Item'] ?? $row['nama_item'] ?? $row['name'] ?? '');
-                    $categoryName = trim($row['Kategori'] ?? $row['kategori'] ?? $row['category'] ?? '');
-                    $sku = trim($row['SKU'] ?? $row['sku'] ?? '');
-                    $barcode = trim($row['Barcode'] ?? $row['barcode'] ?? '');
-                    $type = trim($row['Tipe'] ?? $row['tipe'] ?? $row['type'] ?? '');
-                    $unitPrice = !empty($row['Harga Beli'] ?? $row['harga_beli'] ?? $row['unit_price'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Harga Beli'] ?? $row['harga_beli'] ?? $row['unit_price'])) : 0;
-                    $unit = trim($row['Satuan'] ?? $row['satuan'] ?? $row['unit'] ?? 'pcs');
-                    $currentStock = !empty($row['Stok'] ?? $row['Stok Awal'] ?? $row['stok'] ?? $row['stok_awal'] ?? $row['current_stock'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Stok'] ?? $row['Stok Awal'] ?? $row['stok'] ?? $row['stok_awal'] ?? $row['current_stock'])) : 0;
-                    $minStock = !empty($row['Min Stok'] ?? $row['min_stok'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Min Stok'] ?? $row['min_stok'])) : 0;
-                    $sellingPrice = !empty($row['Harga Jual'] ?? $row['harga_jual'] ?? $row['selling_price'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Harga Jual'] ?? $row['harga_jual'] ?? $row['selling_price'])) : 0;
-                    $hpp = !empty($row['HPP'] ?? $row['hpp'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['HPP'] ?? $row['hpp'])) : 0;
-
-                    // Parse active status - supports: Aktif/aktif/Yes/yes/1/true (case-insensitive)
-                    $activeValue = strtolower(trim($row['Status'] ?? $row['status'] ?? $row['Aktif'] ?? $row['aktif'] ?? $row['is_active'] ?? 'yes'));
-                    $isActive = in_array($activeValue, ['aktif', 'yes', '1', 'true', 'on']);
-
-                    $description = trim($row['Deskripsi'] ?? $row['deskripsi'] ?? $row['description'] ?? '');
-
-                    // Validate required fields
-                    if (empty($name)) {
-                        $errors[] = "Row $rowNumber: Nama Item wajib diisi";
-                        $failed++;
-                        continue;
-                    }
-
-                    if (empty($type) || !in_array(strtolower($type), ['purchase', 'sales', 'both'])) {
-                        $errors[] = "Row $rowNumber: Tipe harus salah satu dari: Purchase, Sales, Both";
-                        $failed++;
-                        continue;
-                    }
-
-                    // Determine item type flags
-                    $typeLower = strtolower($type);
-                    $isPurchase = $typeLower === 'purchase' || $typeLower === 'both';
-                    $isSales = $typeLower === 'sales' || $typeLower === 'both';
-
-                    // Find or create category (scoped to company and branch)
-                    $categoryId = null;
-                    if (!empty($categoryName)) {
-                        $category = Category::firstOrCreate(
-                            [
-                                'name' => $categoryName,
-                                'company_id' => $companyId,
-                                'branch_id' => $branchId
-                            ],
-                            [
-                                'type' => $isSales ? 'product' : 'material',
-                                'is_active' => true
-                            ]
-                        );
-                        $categoryId = $category->id;
-                    }
-
-                    // Check for duplicate barcode
-                    if (!empty($barcode)) {
-                        $existing = Item::where('barcode', $barcode)
-                            ->where('branch_id', $branchId)
-                            ->first();
-                        if ($existing) {
-                            $safeBarcode = e($barcode);
-                            $safeExistingName = e($existing->name);
-                            $errors[] = "Row $rowNumber: Barcode '$safeBarcode' sudah digunakan oleh item lain (ID: {$existing->id})";
-                            $failed++;
-                            continue;
-                        }
-                    }
-
-                    // Check for duplicate name
-                    $existingByName = Item::where('name', $name)
-                        ->where('branch_id', $branchId)
-                        ->first();
-                    if ($existingByName) {
-                        $safeName = e($name);
-                        $errors[] = "Row $rowNumber: Nama item '$safeName' sudah digunakan oleh item lain (ID: {$existingByName->id})";
-                        $failed++;
-                        continue;
-                    }
-
-                    // Check for duplicate SKU
-                    if (!empty($sku)) {
-                        $existingBySku = Item::where('sku', $sku)
-                            ->where('branch_id', $branchId)
-                            ->first();
-                        if ($existingBySku) {
-                            $safeSku = e($sku);
-                            $safeExistingName = e($existingBySku->name);
-                            $errors[] = "Row $rowNumber: SKU '$safeSku' sudah digunakan oleh item lain (ID: {$existingBySku->id})";
-                            $failed++;
-                            continue;
-                        }
-                    }
-
-                    // Prepare item data
-                    $itemData = [
-                        'name' => $name,
-                        'category_id' => $categoryId,
-                        'sku' => $sku ?: null,
-                        'barcode' => $barcode ?: null,
-                        'is_purchase' => $isPurchase,
-                        'is_sales' => $isSales,
-                        'unit_price' => $isPurchase ? $unitPrice : 0,
-                        'unit' => $isPurchase ? $unit : null,
-                        'current_stock' => $isPurchase ? $currentStock : 0,
-                        'min_stock_level' => $isPurchase ? $minStock : 0,
-                        'selling_price' => $isSales ? $sellingPrice : 0,
-                        'hpp' => $hpp,
-                        'is_active' => $isSales ? $isActive : true,
-                        'description' => $description,
-                        'company_id' => $companyId,
-                        'branch_id' => $branchId,
-                    ];
-
-                    // Create item
-                    $item = Item::create($itemData);
-                    $imported++;
-
-                    // Store in map for BOM reference (by name and SKU)
-                    $itemMap[$name] = $item;
-                    if (!empty($sku)) {
-                        $itemMap["SKU:$sku"] = $item;
-                    }
-
-                } catch (\Exception $e) {
-                    $errors[] = "Row " . ($index + 2) . ": " . $e->getMessage();
-                    $failed++;
-                }
-            }
-
-            // Import BOM/Recipes if available
-            if (!empty($bomData)) {
-                foreach ($bomData as $index => $row) {
-                    try {
-                        $rowNumber = $index + 2;
-
-                        $productName = trim($row['Nama Produk'] ?? $row['nama_produk'] ?? '');
-                        $productSku = trim($row['SKU Produk'] ?? $row['sku_produk'] ?? '');
-                        $ingredientName = trim($row['Bahan Baku'] ?? $row['bahan_baku'] ?? '');
-                        $ingredientSku = trim($row['SKU Bahan'] ?? $row['sku_bahan'] ?? '');
-                        $quantity = !empty($row['Jumlah'] ?? $row['jumlah'] ?? '') ? floatval(str_replace(['.', ','], ['', '.'], $row['Jumlah'] ?? $row['jumlah'])) : 0;
-
-                        // Find parent item (product)
-                        $parentItem = null;
-                        if (!empty($productName) && isset($itemMap[$productName])) {
-                            $parentItem = $itemMap[$productName];
-                        } elseif (!empty($productSku) && isset($itemMap["SKU:$productSku"])) {
-                            $parentItem = $itemMap["SKU:$productSku"];
-                        }
-
-                        // Find ingredient item
-                        $ingredientItem = null;
-                        if (!empty($ingredientName) && isset($itemMap[$ingredientName])) {
-                            $ingredientItem = $itemMap[$ingredientName];
-                        } elseif (!empty($ingredientSku) && isset($itemMap["SKU:$ingredientSku"])) {
-                            $ingredientItem = $itemMap["SKU:$ingredientSku"];
-                        }
-
-                        // Validate
-                        if (!$parentItem) {
-                            $safeProductName = e($productName);
-                            $safeProductSku = e($productSku);
-                            $errors[] = "BOM Row $rowNumber: Produk '$safeProductName' (SKU: $safeProductSku) tidak ditemukan";
-                            $failed++;
-                            continue;
-                        }
-
-                        if (!$ingredientItem) {
-                            $safeIngredientName = e($ingredientName);
-                            $safeIngredientSku = e($ingredientSku);
-                            $errors[] = "BOM Row $rowNumber: Bahan '$safeIngredientName' (SKU: $safeIngredientSku) tidak ditemukan";
-                            $failed++;
-                            continue;
-                        }
-
-                        if ($quantity <= 0) {
-                            $errors[] = "BOM Row $rowNumber: Jumlah harus lebih dari 0";
-                            $failed++;
-                            continue;
-                        }
-
-                        // Create recipe
-                        \App\Models\ItemRecipe::create([
-                            'parent_item_id' => $parentItem->id,
-                            'ingredient_item_id' => $ingredientItem->id,
-                            'quantity_required' => $quantity,
-                        ]);
-
-                        $recipesImported++;
-
-                    } catch (\Exception $e) {
-                        $errors[] = "BOM Row " . ($index + 2) . ": " . $e->getMessage();
-                        $failed++;
-                    }
-                }
-            }
-        });
-
-        $message = "Import completed: $imported items imported successfully";
+        $message = "Import completed:";
+        $parts = [];
+        if ($imported > 0) {
+            $parts[] = "$imported items imported";
+        }
+        if ($updated > 0) {
+            $parts[] = "$updated items updated";
+        }
+        if ($skipped > 0) {
+            $parts[] = "$skipped items skipped (no changes)";
+        }
         if ($recipesImported > 0) {
-            $message .= ", $recipesImported recipes imported";
+            $parts[] = "$recipesImported recipes imported";
         }
         if ($failed > 0) {
-            $message .= ", $failed rows failed";
+            $parts[] = "$failed rows failed";
         }
+
+        $message .= " " . implode(', ', $parts);
 
         if (!empty($errors)) {
             // Store errors in session for display
