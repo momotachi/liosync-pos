@@ -681,13 +681,14 @@ class AdminReportsController extends Controller
         $totalRevenue = $orders->sum('total_amount');
         $totalOrders = $orders->count();
 
-        // Calculate HPP (cost of goods sold)
+        // Calculate HPP (cost of goods sold) - use calculated HPP from BOM
         $totalHpp = 0;
         foreach ($orders as $order) {
             foreach ($order->items as $item) {
                 $product = $item->item;
-                if ($product && $product->hpp) {
-                    $totalHpp += $product->hpp * $item->quantity;
+                if ($product) {
+                    // Use calculated HPP which includes BOM cost for sales items
+                    $totalHpp += $product->calculated_hpp * $item->quantity;
                 }
             }
         }
@@ -735,27 +736,44 @@ class AdminReportsController extends Controller
             ->orderBy('period')
             ->get();
 
-        // Get HPP over time (only active orders)
-        $orderIds = Order::active()->whereBetween('created_at', [$from, $to]);
+        // Get HPP over time - need to calculate from items with BOM
+        $ordersQuery = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
-            $orderIds->where('branch_id', $branchId);
+            $ordersQuery->where('branch_id', $branchId);
         }
-        $orderIds = $orderIds->pluck('id');
+        $orders = $ordersQuery->with('items.item')->get();
 
-        $hppData = \App\Models\OrderItem::whereIn('order_id', $orderIds)
-            ->selectRaw('DATE_FORMAT(created_at, ?) as period, SUM(subtotal) as hpp', [$groupBy])
-            ->groupBy('period')
-            ->orderBy('period')
-            ->get();
+        // Calculate HPP per period
+        $hppByPeriod = [];
+        foreach ($orders as $order) {
+            $periodKey = date(match ($period) {
+                'today' => 'H:00',
+                default => 'Y-m-d',
+            }, strtotime($order->created_at));
+
+            if (!isset($hppByPeriod[$periodKey])) {
+                $hppByPeriod[$periodKey] = 0;
+            }
+
+            foreach ($order->items as $item) {
+                $product = $item->item;
+                if ($product) {
+                    // Use calculated HPP which includes BOM cost for sales items
+                    $hppByPeriod[$periodKey] += $product->calculated_hpp * $item->quantity;
+                }
+            }
+        }
 
         // Merge data
         $labels = $revenueData->pluck('period')->toArray();
         $revenue = $revenueData->pluck('revenue')->toArray();
-        $hpp = $hppData->pluck('hpp')->toArray();
+        $hpp = [];
         $profit = [];
+
         foreach ($labels as $index => $label) {
             $rev = $revenue[$index] ?? 0;
-            $cost = $hpp[$index] ?? 0;
+            $cost = $hppByPeriod[$label] ?? 0;
+            $hpp[] = $cost;
             $profit[] = $rev - $cost;
         }
 
@@ -789,11 +807,12 @@ class AdminReportsController extends Controller
             ->limit(10)
             ->get();
 
-        // Calculate profit for each product
+        // Calculate profit for each product - use calculated HPP from BOM
         $query->each(function ($item) {
             $product = $item->item;
-            if ($product && $product->hpp) {
-                $item->total_hpp = $product->hpp * $item->total_quantity;
+            if ($product) {
+                // Use calculated HPP which includes BOM cost for sales items
+                $item->total_hpp = $product->calculated_hpp * $item->total_quantity;
                 $item->total_profit = $item->total_revenue - $item->total_hpp;
                 $item->profit_margin = $item->total_revenue > 0 ? ($item->total_profit / $item->total_revenue) * 100 : 0;
             } else {
