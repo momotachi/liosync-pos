@@ -139,8 +139,9 @@
                         <?php
                             $orderHpp = 0;
                             foreach($order->items as $item) {
-                                if($item->item && $item->item->hpp) {
-                                    $orderHpp += $item->item->hpp * $item->quantity;
+                                if($item->item) {
+                                    // Use calculated HPP which includes BOM cost for sales items
+                                    $orderHpp += $item->item->calculated_hpp * $item->quantity;
                                 }
                             }
                             $orderProfit = $order->total_amount - $orderHpp;
