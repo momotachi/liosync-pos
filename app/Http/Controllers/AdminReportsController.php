@@ -82,8 +82,9 @@ class AdminReportsController extends Controller
         // Get top selling products
         $topProducts = $this->getTopProducts($from, $to, $branchId);
 
-        // Get recent orders
+        // Get recent orders (only active/non-cancelled)
         $recentOrders = Order::with(['items.item'])
+            ->active()
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId)
             ->orderBy('created_at', 'desc')
@@ -125,11 +126,11 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get sales metrics for the period.
+     * Get sales metrics for the period (only active/non-cancelled orders).
      */
     private function getSalesMetrics($from, $to, $branchId = null)
     {
-        $query = Order::whereBetween('created_at', [$from, $to]);
+        $query = Order::active()->whereBetween('created_at', [$from, $to]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -141,15 +142,18 @@ class AdminReportsController extends Controller
             'total_revenue' => $orders->sum('total_amount'),
             'total_orders' => $orders->count(),
             'average_order_value' => $orders->avg('total_amount') ?? 0,
-            'total_items_sold' => OrderItem::whereHas('order', function ($q) use ($from, $to) {
-                $q->whereBetween('created_at', [$from, $to]);
+            'total_items_sold' => OrderItem::whereHas('order', function ($q) use ($from, $to, $branchId) {
+                $q->active()->whereBetween('created_at', [$from, $to]);
+                if ($branchId) {
+                    $q->where('branch_id', $branchId);
+                }
             })->sum('quantity'),
             'total_tax' => 0, // Calculate based on settings if needed
         ];
     }
 
     /**
-     * Get sales over time data for charts.
+     * Get sales over time data for charts (only active/non-cancelled orders).
      */
     private function getSalesOverTime($from, $to, $period, $branchId = null)
     {
@@ -160,7 +164,7 @@ class AdminReportsController extends Controller
             default => '%Y-%m-%d',
         };
 
-        $query = Order::whereBetween('created_at', [$from, $to]);
+        $query = Order::active()->whereBetween('created_at', [$from, $to]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -180,7 +184,7 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get top selling products.
+     * Get top selling products (only from active/non-cancelled orders).
      */
     private function getTopProducts($from, $to, $branchId = null)
     {
@@ -191,7 +195,7 @@ class AdminReportsController extends Controller
                 COUNT(DISTINCT order_id) as orders_count
             ')
             ->whereHas('order', function ($q) use ($from, $to, $branchId) {
-                $q->whereBetween('created_at', [$from, $to]);
+                $q->active()->whereBetween('created_at', [$from, $to]);
                 if ($branchId) {
                     $q->where('branch_id', $branchId);
                 }
@@ -206,11 +210,11 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get payment method breakdown.
+     * Get payment method breakdown (only active/non-cancelled orders).
      */
     private function getPaymentMethodBreakdown($from, $to, $branchId = null)
     {
-        $query = Order::whereBetween('created_at', [$from, $to]);
+        $query = Order::active()->whereBetween('created_at', [$from, $to]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -276,8 +280,9 @@ class AdminReportsController extends Controller
         // Determine date range
         [$from, $to] = $this->getDateRange($period, $startDate, $endDate);
 
-        // Build query
-        $query = Order::with(['items.item', 'user'])
+        // Build query (only active/non-cancelled orders)
+        $query = Order::with(['items.item', 'user', 'cancelledByUser'])
+            ->active()
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId);
 
@@ -340,8 +345,9 @@ class AdminReportsController extends Controller
         // Determine date range
         [$from, $to] = $this->getDateRange($period, $startDate, $endDate);
 
-        // Build query
-        $query = Order::with(['items.item', 'user'])
+        // Build query (only active/non-cancelled orders)
+        $query = Order::with(['items.item', 'user', 'cancelledByUser'])
+            ->active()
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId);
 
@@ -471,8 +477,9 @@ class AdminReportsController extends Controller
         // Determine date range
         [$from, $to] = $this->getDateRange($period, $startDate, $endDate);
 
-        // Build query with branch filter
+        // Build query with branch filter (only active/non-cancelled purchases)
         $query = Purchase::with(['items.item', 'user', 'cancelledByUser'])
+            ->active()
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId);
 
@@ -511,11 +518,11 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get purchase metrics for the period.
+     * Get purchase metrics for the period (only active/non-cancelled purchases).
      */
     private function getPurchaseMetrics($from, $to, $branchId = null)
     {
-        $query = Purchase::whereBetween('created_at', [$from, $to]);
+        $query = Purchase::active()->whereBetween('created_at', [$from, $to]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -524,7 +531,7 @@ class AdminReportsController extends Controller
         $purchases = $query;
 
         $totalItems = \App\Models\PurchaseItem::whereHas('purchase', function ($q) use ($from, $to, $branchId) {
-            $q->whereBetween('created_at', [$from, $to]);
+            $q->active()->whereBetween('created_at', [$from, $to]);
             if ($branchId) {
                 $q->where('branch_id', $branchId);
             }
@@ -539,7 +546,7 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get purchases over time data for charts.
+     * Get purchases over time data for charts (only active/non-cancelled purchases).
      */
     private function getPurchasesOverTime($from, $to, $period, $branchId = null)
     {
@@ -550,7 +557,7 @@ class AdminReportsController extends Controller
             default => '%Y-%m-%d',
         };
 
-        $query = Purchase::whereBetween('created_at', [$from, $to]);
+        $query = Purchase::active()->whereBetween('created_at', [$from, $to]);
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
@@ -570,7 +577,7 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get top purchased items.
+     * Get top purchased items (only from active/non-cancelled purchases).
      */
     private function getTopPurchasedItems($from, $to, $branchId = null)
     {
@@ -581,7 +588,7 @@ class AdminReportsController extends Controller
                 COUNT(DISTINCT purchase_id) as purchase_count
             ')
             ->whereHas('purchase', function ($q) use ($from, $to, $branchId) {
-                $q->whereBetween('created_at', [$from, $to]);
+                $q->active()->whereBetween('created_at', [$from, $to]);
                 if ($branchId) {
                     $q->where('branch_id', $branchId);
                 }
@@ -639,8 +646,9 @@ class AdminReportsController extends Controller
         // Get top profitable products
         $topProducts = $this->getTopProfitableProducts($from, $to, $branchId);
 
-        // Get detailed profit by order
+        // Get detailed profit by order (only active/non-cancelled)
         $orders = Order::with(['items.item'])
+            ->active()
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId)
             ->orderBy('created_at', 'desc')
@@ -659,12 +667,12 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get profit metrics for the period.
+     * Get profit metrics for the period (only active/non-cancelled transactions).
      */
     private function getProfitMetrics($from, $to, $branchId = null)
     {
-        // Get sales data
-        $salesQuery = Order::whereBetween('created_at', [$from, $to]);
+        // Get sales data (only active orders)
+        $salesQuery = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $salesQuery->where('branch_id', $branchId);
         }
@@ -684,8 +692,8 @@ class AdminReportsController extends Controller
             }
         }
 
-        // Get purchase cost (raw materials purchased)
-        $purchaseQuery = Purchase::whereBetween('created_at', [$from, $to]);
+        // Get purchase cost (raw materials purchased - only active)
+        $purchaseQuery = Purchase::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $purchaseQuery->where('branch_id', $branchId);
         }
@@ -705,7 +713,7 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get profit over time data for charts.
+     * Get profit over time data for charts (only active/non-cancelled transactions).
      */
     private function getProfitOverTime($from, $to, $period, $branchId = null)
     {
@@ -716,8 +724,8 @@ class AdminReportsController extends Controller
             default => '%Y-%m-%d',
         };
 
-        // Get revenue over time
-        $revenueQuery = Order::whereBetween('created_at', [$from, $to]);
+        // Get revenue over time (only active orders)
+        $revenueQuery = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $revenueQuery->where('branch_id', $branchId);
         }
@@ -727,8 +735,8 @@ class AdminReportsController extends Controller
             ->orderBy('period')
             ->get();
 
-        // Get HPP over time
-        $orderIds = Order::whereBetween('created_at', [$from, $to]);
+        // Get HPP over time (only active orders)
+        $orderIds = Order::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $orderIds->where('branch_id', $branchId);
         }
@@ -868,12 +876,12 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get cashflow metrics for the period.
+     * Get cashflow metrics for the period (only active/non-cancelled transactions).
      */
     private function getCashflowMetrics($from, $to, $branchId = null)
     {
-        // Cash In - from sales
-        $cashInQuery = Order::whereBetween('created_at', [$from, $to])
+        // Cash In - from sales (only active orders)
+        $cashInQuery = Order::active()->whereBetween('created_at', [$from, $to])
             ->where('status', 'completed');
         if ($branchId) {
             $cashInQuery->where('branch_id', $branchId);
@@ -887,8 +895,8 @@ class AdminReportsController extends Controller
 
         $totalCashIn = $cashInQuery->sum('total_amount');
 
-        // Cash Out - from purchases
-        $cashOutQuery = Purchase::whereBetween('created_at', [$from, $to]);
+        // Cash Out - from purchases (only active purchases)
+        $cashOutQuery = Purchase::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $cashOutQuery->where('branch_id', $branchId);
         }
@@ -906,14 +914,14 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get cashflow transactions (ledger style).
+     * Get cashflow transactions (ledger style) - only active/non-cancelled.
      */
     private function getCashflowTransactions($from, $to, $branchId = null)
     {
         $transactions = collect();
 
-        // Sales transactions (Cash In)
-        $salesQuery = Order::whereBetween('created_at', [$from, $to])
+        // Sales transactions (Cash In) - only active orders
+        $salesQuery = Order::active()->whereBetween('created_at', [$from, $to])
             ->where('status', 'completed');
         if ($branchId) {
             $salesQuery->where('branch_id', $branchId);
@@ -935,8 +943,8 @@ class AdminReportsController extends Controller
             ]);
         }
 
-        // Purchase transactions (Cash Out)
-        $purchaseQuery = Purchase::whereBetween('created_at', [$from, $to]);
+        // Purchase transactions (Cash Out) - only active purchases
+        $purchaseQuery = Purchase::active()->whereBetween('created_at', [$from, $to]);
         if ($branchId) {
             $purchaseQuery->where('branch_id', $branchId);
         }
@@ -985,12 +993,12 @@ class AdminReportsController extends Controller
     }
 
     /**
-     * Get initial balances before the period.
+     * Get initial balances before the period (only active/non-cancelled transactions).
      */
     private function getInitialBalances($from, $branchId = null)
     {
-        // Get all sales before this period
-        $salesQuery = Order::where('created_at', '<', $from)
+        // Get all sales before this period (only active orders)
+        $salesQuery = Order::active()->where('created_at', '<', $from)
             ->where('status', 'completed');
         if ($branchId) {
             $salesQuery->where('branch_id', $branchId);
@@ -1008,8 +1016,8 @@ class AdminReportsController extends Controller
             }
         }
 
-        // Subtract purchases before this period
-        $purchaseQuery = Purchase::where('created_at', '<', $from);
+        // Subtract purchases before this period (only active purchases)
+        $purchaseQuery = Purchase::active()->where('created_at', '<', $from);
         if ($branchId) {
             $purchaseQuery->where('branch_id', $branchId);
         }
