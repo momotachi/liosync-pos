@@ -1005,6 +1005,7 @@ class AdminReportsController extends Controller
         $adjustments = $adjustmentQuery->orderBy('adjustment_date', 'asc')->get();
         foreach ($adjustments as $adjustment) {
             $isPositive = $adjustment->amount >= 0;
+            $absAmount = abs($adjustment->amount);
             $transactions->push([
                 'date' => $adjustment->adjustment_date,
                 'type' => $isPositive ? 'in' : 'out',
@@ -1013,9 +1014,9 @@ class AdminReportsController extends Controller
                 'reference' => $adjustment->id,
                 'reference_type' => 'adjustment',
                 'payment_method' => $adjustment->type,
-                'amount' => abs($adjustment->amount),
-                'cash_amount' => $adjustment->type === 'cash' ? $adjustment->amount : 0,
-                'bank_amount' => $adjustment->type === 'bank' ? $adjustment->amount : 0,
+                'amount' => $absAmount,
+                'cash_amount' => $adjustment->type === 'cash' ? ($isPositive ? $absAmount : -$absAmount) : 0,
+                'bank_amount' => $adjustment->type === 'bank' ? ($isPositive ? $absAmount : -$absAmount) : 0,
             ]);
         }
 

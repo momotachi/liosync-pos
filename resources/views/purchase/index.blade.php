@@ -865,10 +865,10 @@
                             this.showPaymentModal = false;
                             this.isLoading = false;
 
-                            // Open receipt
-                            if (response.data.receipt_url) {
-                                window.open(response.data.receipt_url, '_blank');
-                            }
+                            // Don't auto-open receipt - user can access from purchase history if needed
+                            // if (response.data.receipt_url) {
+                            //     window.open(response.data.receipt_url, '_blank');
+                            // }
                         })
                         .catch(error => {
                             console.error('Purchase error:', error);
