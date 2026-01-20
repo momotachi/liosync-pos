@@ -1184,7 +1184,7 @@ class AdminReportsController extends Controller
     {
         $this->authorizeReportAccess();
 
-        $order = Order::with(['items.item', 'user'])->findOrFail($id);
+        $order = Order::with(['items.item', 'user', 'cancelledByUser'])->findOrFail($id);
 
         return response()->json([
             'order' => $order,

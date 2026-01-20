@@ -169,6 +169,7 @@
         loading: false,
         order: null,
         items: [],
+        canCancelOrder: window.canCancelOrder || false,
         openModal(orderId) {
             this.showModal = true;
             this.loading = true;
@@ -191,6 +192,37 @@
             this.showModal = false;
             this.order = null;
             this.items = [];
+        },
+        cancelOrder() {
+            if (!this.order) return;
+
+            const reason = prompt('Masukkan alasan pembatalan:');
+            if (!reason || reason.trim() === '') {
+                alert('Alasan pembatalan harus diisi');
+                return;
+            }
+
+            fetch('/pos/orders/' + this.order.id + '/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.csrfToken
+                },
+                body: JSON.stringify({ reason: reason })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message || 'Gagal membatalkan transaksi');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat membatalkan transaksi');
+            });
         }
     }">
     <div class="overflow-x-auto">
@@ -318,7 +350,6 @@
             </div>
         </div>
     @endif
-</div>
 
 <!-- Order Detail Modal -->
 <div x-show="showModal" x-cloak
@@ -380,6 +411,19 @@
                         </button>
                     </div>
 
+                    <!-- Cancelled Status Badge -->
+                    <div x-show="order.cancelled_at" class="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4" style="display: none;">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-red-600 dark:text-red-400">cancel</span>
+                            <div>
+                                <p class="text-sm font-semibold text-red-800 dark:text-red-300">Transaksi Dibatalkan</p>
+                                <p class="text-xs text-red-600 dark:text-red-400 mt-1" x-show="order.cancel_reason" x-text="'Alasan: ' + order.cancel_reason"></p>
+                                <p class="text-xs text-red-600 dark:text-red-400" x-show="order.cancelled_by_user" x-text="'Oleh: ' + (order.cancelled_by_user?.name || '-')"></p>
+                                <p class="text-xs text-red-500 dark:text-red-500 mt-1" x-text="new Date(order.cancelled_at).toLocaleString('id-ID')"></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Order Info -->
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -428,7 +472,7 @@
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-medium text-gray-700 dark:text-gray-300">Total Amount</span>
-                            <span class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" x-text="'Rp ' + Number(order.total_amount).toLocaleString('id-ID')"></span>
+                            <span class="text-2xl font-bold" :class="order.cancelled_at ? 'text-gray-400 line-through' : 'text-emerald-600 dark:text-emerald-400'" x-text="'Rp ' + Number(order.total_amount).toLocaleString('id-ID')"></span>
                         </div>
                     </div>
 
@@ -439,6 +483,10 @@
                             <span class="material-symbols-outlined text-[18px]">print</span>
                             <span>Print Receipt</span>
                         </a>
+                        <button x-show="!order.cancelled_at && canCancelOrder" @click="cancelOrder" type="button"
+                                class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors" style="display: none;">
+                            Batalkan Transaksi
+                        </button>
                         <button @click="closeModal()" type="button"
                                 class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             Close
@@ -449,6 +497,13 @@
         </div>
     </div>
 </div>
+</div>
+
+<!-- Order Cancel Data (Hidden) -->
+<script>
+    window.canCancelOrder = {{ auth()->check() && !auth()->user()->isCashier() ? 'true' : 'false' }};
+    window.csrfToken = '{{ csrf_token() }}';
+</script>
 @endsection
 
 @push('scripts')
