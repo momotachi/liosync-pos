@@ -251,7 +251,7 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6" id="modalFooter">
                         <button type="button" onclick="closePurchaseModal()" class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 sm:ml-3 sm:w-auto">Tutup</button>
                     </div>
                 </div>
@@ -262,6 +262,8 @@
     <!-- Purchase Data (Hidden) -->
     <script>
         window.purchasesData = @json($purchases->items());
+        window.canCancelPurchase = {{ auth()->check() && !auth()->user()->isCashier() ? 'true' : 'false' }};
+        window.csrfToken = '{{ csrf_token() }}';
     </script>
 @endsection
 
@@ -343,11 +345,18 @@
         }
     });
 
+    let currentPurchaseId = null;
+
     function showPurchaseDetail(purchaseId) {
         const purchase = window.purchasesData.find(p => p.id === purchaseId);
         if (!purchase) return;
 
+        currentPurchaseId = purchaseId;
         const modalContent = document.getElementById('modalContent');
+        const modalFooter = document.getElementById('modalFooter');
+
+        const isCancelled = purchase.cancelled_at !== null;
+        const canCancel = window.canCancelPurchase && !isCancelled;
 
         let itemsHtml = purchase.items.map(item => `
             <tr class="border-b dark:border-gray-700">
@@ -360,6 +369,21 @@
 
         modalContent.innerHTML = `
             <div class="space-y-4">
+                <!-- Status Badge -->
+                ${isCancelled ? `
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-red-600 dark:text-red-400">cancel</span>
+                        <div>
+                            <p class="text-sm font-semibold text-red-800 dark:text-red-300">Transaksi Dibatalkan</p>
+                            ${purchase.cancel_reason ? `<p class="text-xs text-red-600 dark:text-red-400 mt-1">Alasan: ${purchase.cancel_reason}</p>` : ''}
+                            ${purchase.cancelled_by ? `<p class="text-xs text-red-600 dark:text-red-400">Oleh: ${purchase.cancelled_by_user?.name || '-'}</p>` : ''}
+                            <p class="text-xs text-red-500 dark:text-red-500 mt-1">${new Date(purchase.cancelled_at).toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
                 <!-- PO Info -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -404,7 +428,7 @@
                                 ${itemsHtml}
                                 <tr class="bg-gray-50 dark:bg-gray-700 font-semibold">
                                     <td colspan="3" class="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">Total</td>
-                                    <td class="px-4 py-3 text-sm text-right text-emerald-600 dark:text-emerald-400">Rp ${parseFloat(purchase.total_amount).toLocaleString('id-ID')}</td>
+                                    <td class="px-4 py-3 text-sm text-right ${isCancelled ? 'text-gray-400 line-through' : 'text-emerald-600 dark:text-emerald-400'}">Rp ${parseFloat(purchase.total_amount).toLocaleString('id-ID')}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -426,7 +450,51 @@
             </div>
         `;
 
+        // Update footer based on cancel status
+        if (canCancel) {
+            modalFooter.innerHTML = `
+                <button type="button" onclick="cancelPurchase()" class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 sm:ml-3 sm:w-auto">Batalkan Transaksi</button>
+                <button type="button" onclick="closePurchaseModal()" class="mt-3 sm:mt-0 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 sm:w-auto">Tutup</button>
+            `;
+        } else {
+            modalFooter.innerHTML = `
+                <button type="button" onclick="closePurchaseModal()" class="inline-flex w-full justify-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 sm:ml-3 sm:w-auto">Tutup</button>
+            `;
+        }
+
         document.getElementById('purchaseModal').classList.remove('hidden');
+    }
+
+    function cancelPurchase() {
+        if (!currentPurchaseId) return;
+
+        const reason = prompt('Masukkan alasan pembatalan:');
+        if (!reason || reason.trim() === '') {
+            alert('Alasan pembatalan harus diisi');
+            return;
+        }
+
+        fetch(`/purchase/${currentPurchaseId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': window.csrfToken
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message || 'Gagal membatalkan transaksi');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat membatalkan transaksi');
+        });
     }
 
     function closePurchaseModal() {

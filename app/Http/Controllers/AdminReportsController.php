@@ -472,7 +472,7 @@ class AdminReportsController extends Controller
         [$from, $to] = $this->getDateRange($period, $startDate, $endDate);
 
         // Build query with branch filter
-        $query = Purchase::with(['items.item', 'user'])
+        $query = Purchase::with(['items.item', 'user', 'cancelledByUser'])
             ->whereBetween('created_at', [$from, $to])
             ->where('branch_id', $branchId);
 

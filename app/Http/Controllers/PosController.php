@@ -372,6 +372,58 @@ class PosController extends Controller
     }
 
     /**
+     * Cancel a completed order (with stock revert)
+     */
+    public function cancelOrder(Request $request, $id)
+    {
+        $this->authorizePosAccess();
+
+        $order = Order::with('items')->findOrFail($id);
+
+        // Only allow admin/company admin to cancel orders
+        $user = auth()->user();
+        if ($user->isCashier()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cashier cannot cancel orders.'
+            ], 403);
+        }
+
+        if ($order->isCancelled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order is already cancelled.'
+            ], 400);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $success = $order->cancel($request->reason, $user->id);
+
+            if (!$success) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to cancel order.'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order cancelled successfully! Stock has been reverted.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cancel failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Generate and display receipt for an order.
      */
     public function receipt($id)

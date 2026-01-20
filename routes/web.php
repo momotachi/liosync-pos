@@ -44,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos/pending-orders', [PosController::class, 'pendingOrders'])->name('pos.pending-orders');
     Route::post('/pos/orders/{id}/payment', [PosController::class, 'processPayment'])->name('pos.payment.process');
     Route::delete('/pos/orders/{id}', [PosController::class, 'deletePendingOrder'])->name('pos.order.delete');
+    Route::post('/pos/orders/{id}/cancel', [PosController::class, 'cancelOrder'])->name('pos.order.cancel');
     Route::get('/pos/receipt/{id}', [PosController::class, 'receipt'])->name('pos.receipt');
     Route::get('/pos/receipt/{id}/print', [PosController::class, 'printReceipt'])->name('pos.receipt.print');
     Route::get('/pos/receipt/{id}/kitchen', [PosController::class, 'kitchenReceipt'])->name('pos.receipt.kitchen');
@@ -54,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'restrict.cashier'])->group(function () {
     Route::get('/purchase', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase.index');
     Route::post('/purchase/store', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.store');
+    Route::post('/purchase/{id}/cancel', [\App\Http\Controllers\PurchaseOrderController::class, 'cancelPurchase'])->name('purchase.cancel');
     Route::get('/purchase/receipt/{id}', [\App\Http\Controllers\PurchaseOrderController::class, 'receipt'])->name('purchase.receipt');
 });
 

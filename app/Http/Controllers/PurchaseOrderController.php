@@ -240,4 +240,56 @@ class PurchaseOrderController extends Controller
 
         return view('purchase.receipt', compact('purchase', 'settings'));
     }
+
+    /**
+     * Cancel a purchase (with stock revert)
+     */
+    public function cancelPurchase(Request $request, $id)
+    {
+        $this->authorizePurchaseAccess();
+
+        $purchase = Purchase::with('items')->findOrFail($id);
+
+        // Only allow admin/company admin to cancel purchases
+        $user = auth()->user();
+        if ($user->isCashier()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cashier cannot cancel purchases.'
+            ], 403);
+        }
+
+        if ($purchase->isCancelled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Purchase is already cancelled.'
+            ], 400);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $success = $purchase->cancel($request->reason, $user->id);
+
+            if (!$success) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to cancel purchase.'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase cancelled successfully! Stock has been reverted.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cancel failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
