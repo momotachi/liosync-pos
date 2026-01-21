@@ -74,12 +74,18 @@ class SubscriptionPayment extends Model
 
             // If this is a renewal payment (has months), extend the subscription
             if ($this->months && $this->months > 0) {
-                // Extend from current end date or from now if expired
-                $currentEndDate = $subscription->end_date && $subscription->end_date->isFuture()
-                    ? $subscription->end_date
-                    : now();
-
-                $subscription->end_date = $currentEndDate->addMonths($this->months);
+                // If subscription is pending, reset the dates to start from now
+                if ($subscription->status === 'pending') {
+                    $subscription->start_date = now();
+                    $subscription->end_date = now()->addMonths($this->months);
+                } else {
+                    // Extend from current end date or from now if expired
+                    $currentEndDate = $subscription->end_date && $subscription->end_date->isFuture()
+                        ? $subscription->end_date
+                        : now();
+    
+                    $subscription->end_date = $currentEndDate->addMonths($this->months);
+                }
             }
 
             $subscription->status = 'active';

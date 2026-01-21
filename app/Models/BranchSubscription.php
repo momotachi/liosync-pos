@@ -98,7 +98,7 @@ class BranchSubscription extends Model
      */
     public function getRemainingDaysAttribute(): int
     {
-        if (!$this->end_date) {
+        if (!$this->end_date || $this->status !== 'active') {
             return 0;
         }
 

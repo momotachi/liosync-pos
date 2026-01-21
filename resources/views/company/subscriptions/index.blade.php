@@ -202,15 +202,16 @@
                            accept="image/*"
                            required
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-                    <p class="text-xs text-gray-500 mt-1">Upload transfer receipt (max 2MB)</p>
+                    <p class="text-xs text-gray-500 mt-1">Upload transfer receipt (max 5MB)</p>
                 </div>
 
                 <!-- Bank Details -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <p class="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">Transfer to:</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ \App\Models\Setting::get('bank_name', 'BCA') }}</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ \App\Models\Setting::get('bank_account_number', '1234567890') }}</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ \App\Models\Setting::get('bank_account_name', 'Cycle POS System') }}</p>
+                    @php $bank = \App\Models\Bank::active()->ordered()->first(); @endphp
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ $bank?->name ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ $bank?->account_number ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ $bank?->account_name ?? 'N/A' }}</p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4">
@@ -260,15 +261,16 @@
                            accept="image/*"
                            required
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-                    <p class="text-xs text-gray-500 mt-1">Upload transfer receipt (max 2MB)</p>
+                    <p class="text-xs text-gray-500 mt-1">Upload transfer receipt (max 5MB)</p>
                 </div>
 
                 <!-- Bank Details -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <p class="text-sm font-medium text-blue-900 dark:text-blue-400 mb-2">Transfer to:</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ \App\Models\Setting::get('bank_name', 'BCA') }}</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ \App\Models\Setting::get('bank_account_number', '1234567890') }}</p>
-                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ \App\Models\Setting::get('bank_account_name', 'Cycle POS System') }}</p>
+                    @php $bulkBank = \App\Models\Bank::active()->ordered()->first(); @endphp
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Bank: {{ $bulkBank?->name ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Account: {{ $bulkBank?->account_number ?? 'N/A' }}</p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">Name: {{ $bulkBank?->account_name ?? 'N/A' }}</p>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4">

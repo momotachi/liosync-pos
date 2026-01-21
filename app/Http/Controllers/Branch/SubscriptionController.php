@@ -42,7 +42,7 @@ class SubscriptionController extends Controller
         $validated = $request->validate([
             'subscription_plan_id' => 'required|exists:subscription_plans,id',
             'months' => 'required|integer|min:1|max:36',
-            'payment_proof' => 'required|image|max:2048',
+            'payment_proof' => 'required|image|max:5120',
         ]);
 
         $branch = auth()->user()->branch;
@@ -65,6 +65,7 @@ class SubscriptionController extends Controller
             // Create payment record
             $subscription->payments()->create([
                 'amount' => $plan->price * $validated['months'],
+                'months' => (int)$validated['months'],
                 'payment_method' => 'bank_transfer',
                 'proof_image' => $proofPath,
                 'status' => 'pending',
