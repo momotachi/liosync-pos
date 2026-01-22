@@ -101,6 +101,13 @@ class PosController extends Controller
             'company_type' => $companyType,
         ];
 
+        \Illuminate\Support\Facades\Log::info('POS INDEX DEBUG', [
+            'user_id' => auth()->id(),
+            'branch_id' => $branchId,
+            'items_count' => $items->count(),
+            'categories_count' => $categories->count(),
+        ]);
+
         return view('pos.index', compact('categories', 'items', 'settings', 'pendingOrders'));
     }
 

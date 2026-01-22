@@ -46,13 +46,16 @@
 
     <!-- Top Navigation -->
     <header
-        class="flex-none h-14 md:h-16 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-emerald-900 px-3 md:px-6 flex items-center justify-between z-20 shadow-sm">
-        <a href="/branch" class="flex items-center gap-2 md:gap-4 hover:opacity-80 transition-opacity"
+        class="flex-none h-14 md:h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-slate-200/60 dark:border-emerald-900/60 px-3 md:px-6 flex items-center justify-between z-40 sticky top-0 transition-all duration-300">
+        <a href="/branch" class="flex items-center gap-2 md:gap-4 hover:opacity-80 transition-opacity min-w-0"
             title="Go to Dashboard">
-            <div class="size-7 md:size-8 text-primary flex items-center justify-center">
-                <span class="material-symbols-outlined text-2xl md:text-4xl">local_cafe</span>
+            <div class="size-8 md:size-10 text-primary flex items-center justify-center bg-primary/10 rounded-lg md:rounded-xl">
+                <span class="material-symbols-outlined text-xl md:text-3xl">local_cafe</span>
             </div>
-            <h1 class="text-lg md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">JuicePOS</h1>
+            <h1 class="text-base md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+                <span class="hidden xs:inline">JuicePOS</span>
+                <span class="inline xs:hidden">JP</span>
+            </h1>
         </a>
         <!-- Search Bar - Hidden on mobile -->
         <div class="hidden md:flex flex-1 max-w-xl px-8">
@@ -62,32 +65,34 @@
                     <span class="material-symbols-outlined">search</span>
                 </div>
                 <input x-model="search"
-                    class="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-emerald-900/50 transition-all shadow-inner"
+                    class="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-emerald-900/50 transition-all shadow-sm"
                     placeholder="Search item name or code (Alt+S)..." type="text" />
             </div>
         </div>
         <!-- Barcode Scanner - Hidden on mobile -->
         <div class="hidden md:flex items-center gap-2">
-            <button @click="$refs.barcodeInput.focus()"
-                class="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors"
+            <button @click="isMobileApp ? scanProductMobile() : $refs.barcodeInput.focus()"
+                class="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors shadow-sm"
                 title="Scan Barcode (F2)">
                 <span class="material-symbols-outlined">qr_code_scanner</span>
             </button>
             <input x-ref="barcodeInput" x-model="barcodeScan" @keyup.enter="scanBarcode()"
-                class="w-32 px-3 py-2 border-none rounded-lg bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary text-sm font-medium"
+                class="w-32 px-3 py-2 border-none rounded-lg bg-slate-100 dark:bg-emerald-900/30 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary text-sm font-medium transition-all"
                 placeholder="Barcode (F2)">
         </div>
-        <!-- Mobile Search Button -->
-        <button @click="showMobileSearch = !showMobileSearch"
-            class="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100">
-            <span class="material-symbols-outlined">search</span>
-        </button>
-        <!-- Right Actions -->
-        <div class="flex items-center gap-2 md:gap-4">
+        
+        <!-- Right Actions Group -->
+        <div class="flex items-center gap-1.5 md:gap-4 shrink-0">
+            <!-- Mobile Search Button -->
+            <button @click="showMobileSearch = !showMobileSearch"
+                class="md:hidden p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-emerald-100 transition-colors active:scale-95">
+                <span class="material-symbols-outlined">search</span>
+            </button>
+            
             <div class="hidden sm:flex items-center gap-2 mr-2 md:mr-4">
                 <!-- Sidebar Toggle Button (Desktop) -->
                 <button @click="showSidebar = !showSidebar"
-                    class="hidden lg:flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-emerald-800 text-slate-600 dark:text-emerald-100 transition-colors"
+                    class="hidden lg:flex p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-emerald-100 transition-colors"
                     :title="showSidebar ? 'Hide Cart Panel' : 'Show Cart Panel'">
                     <span class="material-symbols-outlined"
                         x-text="showSidebar ? 'right_panel_close' : 'right_panel_open'"></span>
@@ -105,7 +110,9 @@
                     <span class="material-symbols-outlined text-primary">wifi</span>
                 </button>
             </div>
-            <div class="flex items-center gap-3 pl-4 border-l border-slate-200 dark:border-emerald-800"
+            
+            <!-- User Profile Dropdown -->
+            <div class="flex items-center gap-3 pl-2 md:pl-4 border-l border-slate-200 dark:border-white/10"
                 x-data="{ open: false }" style="position: relative; z-index: 50;">
                 <div class="text-right hidden sm:block">
                     <p class="text-sm font-bold leading-none text-slate-900 dark:text-white">
@@ -115,8 +122,8 @@
                 </div>
                 <div class="relative">
                     <button @click.stop="open = !open"
-                        class="size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 overflow-hidden border-2 border-white dark:border-emerald-400 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <img alt="Cashier Avatar" class="w-full h-full object-contain p-0.5"
+                        class="size-9 md:size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 overflow-hidden border-2 border-white dark:border-white/20 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        <img alt="Avatar" class="w-full h-full object-contain p-0.5"
                             src="https://ui-avatars.com/api/?name={{ Auth::check() ? Auth::user()->name : 'Guest' }}&background=05945b&color=fff" />
                     </button>
                     <!-- Dropdown Menu -->
@@ -126,20 +133,21 @@
                         x-transition:leave="transition ease-in duration-150"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-95 translate-y-[-10px]" @click.outside="open = false"
-                        class="absolute right-0 mt-3 w-56 min-w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-slate-200 dark:border-gray-700 py-2"
-                        style="display: none; right: -8px;">
+                        class="absolute right-0 mt-3 w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/10 py-2 ring-1 ring-black/5"
+                        style="display: none; right: 0px;">
                         <!-- User Info Section -->
                         <div
-                            class="px-4 py-3 border-b border-slate-100 dark:border-gray-700 bg-gradient-to-r from-slate-50 to-white dark:from-gray-700/50 dark:to-gray-800">
+                            class="px-4 py-4 border-b border-slate-100 dark:border-white/10 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-white/5 dark:to-transparent">
                             <div class="flex flex-col items-center gap-2 text-center">
                                 <div
-                                    class="size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow">
+                                    class="size-12 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-inner ring-4 ring-white dark:ring-white/10">
                                     {{ substr(Auth::check() ? Auth::user()->name : 'G', 0, 1) }}
                                 </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                                <div class="min-w-0 w-full px-2">
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white truncate">
                                         {{ Auth::check() ? Auth::user()->name : 'Guest' }}
                                     </p>
+
                                     <p class="text-xs text-slate-500 dark:text-gray-400 truncate">
                                         {{ Auth::check() ? Auth::user()->email : '' }}
                                     </p>
@@ -368,8 +376,8 @@
                     class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
 
                     @foreach($items as $item)
-                        <!-- Product Card - Compact for mobile -->
-                        <div x-show="isVisible({{ $item->category_id }}, '{{ addslashes($item->name) }}')"
+                        <!-- Product Card -->
+                        <div x-show="isVisible({{ $item->category_id }}, {{ json_encode($item->name) }})"
                             @click="addToCart({{ json_encode($item) }})"
                             x-transition:enter="transition ease-out duration-300"
                             x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
@@ -1435,6 +1443,7 @@
                 showMobileSearch: false,
                 showMobilePendingOrders: false,
                 isMobileView: window.innerWidth < 1024,
+                isMobileApp: false, // Will be set in init
 
                 // Sidebar Toggle State (Desktop)
                 showSidebar: true,
@@ -1479,6 +1488,23 @@
                 init() {
                     // Test notification system on load
                     console.log('POS initialized, company type:', this.companyType);
+                    
+                    // Detect Mobile App
+                    if (window.MobileBridge && window.MobileBridge.isMobileApp()) {
+                        this.isMobileApp = true;
+                        console.log('Running in Hybrid Mobile App mode');
+
+                        // Check Network Status
+                        if (window.MobileBridge.network) {
+                            window.MobileBridge.network.getStatus().then(result => {
+                                if (result && result.success && result.data) {
+                                    if (!result.data.isConnected) {
+                                        this.$dispatch('notify', { message: 'You are OFFLINE. Check internet connection.', type: 'error' });
+                                    }
+                                }
+                            });
+                        }
+                    }
 
                     // Handle window resize for responsive behavior
                     const handleResize = () => {
@@ -1498,6 +1524,20 @@
                     }
                     // Uncomment to test notification:
                     // this.$dispatch('notify', { message: 'POS Ready!', type: 'success' });
+                    
+                    // Cache products for offline use (Req 3.5)
+                    this.cacheProducts();
+                },
+                
+                // Cache products to native storage
+                cacheProducts() {
+                    if (this.isMobileApp && window.MobileBridge) {
+                        // Use setTimeout to not block init
+                        setTimeout(() => {
+                            window.MobileBridge.storage.set('offline_products', this.products)
+                                .then(res => console.log('Products cached for offline:', res));
+                        }, 2000);
+                    }
                 },
 
                 // Load pending orders for resto
@@ -1528,8 +1568,15 @@
                 },
 
                 isVisible(categoryId, productName) {
+                    if (!productName) productName = ''; // Handle null/undefined from json_encode failure
+                    
                     if (this.activeCategory && this.activeCategory !== categoryId) return false;
-                    if (this.search && !productName.toLowerCase().includes(this.search.toLowerCase())) return false;
+                    
+                    if (this.search) {
+                         const searchLower = this.search.toLowerCase();
+                         if (!String(productName).toLowerCase().includes(searchLower)) return false;
+                    }
+                    
                     return true;
                 },
 
@@ -1683,6 +1730,64 @@
                         });
                 },
 
+                // Scan Product using Native Camera (Mobile App)
+                scanProductMobile() {
+                    if (!this.isMobileApp) return;
+                    
+                    this.isLoading = true;
+                    // Check if MobileBridge is available - logic handled inside MobileBridge but good to check
+                    if (window.MobileBridge) {
+                         window.MobileBridge.scanner.scan().then(result => {
+                             this.isLoading = false;
+                             if (result.success && result.data && result.data.code) {
+                                  this.barcodeScan = result.data.code;
+                                  this.scanBarcode(); // Reuse existing search logic
+                             } else {
+                                 // Optional: handle user cancel or failure silently or with toast
+                                 if (result.error) {
+                                     this.$dispatch('notify', { message: 'Scan failed: ' + result.error, type: 'error' });
+                                 }
+                             }
+                         }).catch(err => {
+                             this.isLoading = false;
+                             console.error("Scanner Error", err);
+                         });
+                    } else {
+                        this.isLoading = false;
+                        console.error("MobileBridge not found");
+                    }
+                },
+
+                // Unified Print Helper
+                doPrint(url) {
+                    if (!url) return;
+                    
+                    if (this.isMobileApp && window.MobileBridge) {
+                        // Fetch receipt content and print natively
+                        this.$dispatch('notify', { message: 'Printing...', type: 'info' });
+                        axios.get(url, { responseType: 'text' }) // Assume URL returns HTML
+                             .then(response => {
+                                 window.MobileBridge.printer.print(response.data)
+                                     .then(res => {
+                                          if (res.success) {
+                                              this.$dispatch('notify', { message: 'Receipt printed!', type: 'success' });
+                                          } else {
+                                              this.$dispatch('notify', { message: 'Print failed', type: 'error' });
+                                          }
+                                     });
+                             })
+                             .catch(err => {
+                                 console.error("Print Error", err);
+                                 this.$dispatch('notify', { message: 'Failed to fetch receipt data', type: 'error' });
+                                 // Fallback
+                                 window.open(url, '_blank');
+                             });
+                    } else {
+                        // Web fallback
+                        window.open(url, '_blank');
+                    }
+                },
+
                 // Open payment modal for pending order
                 openPaymentModal(order) {
                     this.selectedPendingOrder = order;
@@ -1720,7 +1825,7 @@
 
                             // Open receipt
                             if (response.data.receipt_url) {
-                                window.open(response.data.receipt_url, '_blank');
+                                this.doPrint(response.data.receipt_url);
                             }
                         })
                         .catch(error => {
@@ -1749,12 +1854,12 @@
 
                 // Print kitchen receipt
                 printKitchenReceipt(orderId) {
-                    window.open(`/pos/receipt/${orderId}/kitchen`, '_blank', 'width=400,height=600');
+                    this.doPrint(`/pos/receipt/${orderId}/kitchen`);
                 },
 
                 // Print table receipt
                 printTableReceipt(orderId) {
-                    window.open(`/pos/receipt/${orderId}/table`, '_blank', 'width=400,height=600');
+                    this.doPrint(`/pos/receipt/${orderId}/table`);
                 },
 
                 // Actual Submission
@@ -1810,7 +1915,7 @@
 
                             // Open receipt in new tab
                             if (response.data.receipt_url) {
-                                window.open(response.data.receipt_url, '_blank');
+                                this.doPrint(response.data.receipt_url);
                             }
                         })
                         .catch(error => {

@@ -25,7 +25,7 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/auth/me', [AuthController::class, 'me']);
-        Route::post('/auth/refresh', [AuthController::class, 'refresh']); // Optional: specific refresh logic
+        Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 
         // Items
         Route::apiResource('items', ItemController::class);
@@ -57,3 +57,13 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('users', UserController::class);
     });
 });
+
+// Mobile App Routes (Root Level /api/mobile/...)
+Route::get('/mobile/version', [\App\Http\Controllers\Api\MobileController::class, 'version']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/mobile/push/token', [\App\Http\Controllers\Api\MobileController::class, 'pushToken']);
+});
+
+// Fallback / Compatibility Routes
+Route::post('/auth/login', [AuthController::class, 'login']);
