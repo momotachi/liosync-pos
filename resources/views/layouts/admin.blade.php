@@ -438,7 +438,7 @@
 
     <!-- Main Content -->
     <main :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
-        class="flex-1 p-4 md:p-8 overflow-x-hidden transition-all duration-300">
+        class="flex-1 p-4 pt-20 md:p-8 md:pt-8 overflow-x-hidden transition-all duration-300">
 
         {{-- Subscription Expired Warning Banner --}}
         @php

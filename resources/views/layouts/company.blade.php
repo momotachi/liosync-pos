@@ -279,7 +279,7 @@
 
     <!-- Main Content -->
     <main :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'" 
-        class="flex-1 p-4 md:p-8 overflow-x-hidden transition-all duration-300">
+        class="flex-1 p-4 pt-20 md:p-8 md:pt-8 overflow-x-hidden transition-all duration-300">
         <!-- Flash Messages -->
         @if(session('success'))
             <div class="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-3">
