@@ -228,7 +228,7 @@
         <div class="forgot-card">
             <!-- Logo Section -->
             <div class="logo-section">
-                <img src="{{ asset('images/liosync-logo.png') }}" alt="Liosync POS" class="logo-icon">
+                <img src="{{ asset('images/liosync-login-logo.png') }}" alt="Liosync POS" class="logo-icon">
             </div>
 
             <!-- Header Text -->

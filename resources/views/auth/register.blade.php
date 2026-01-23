@@ -470,7 +470,7 @@
         <div class="register-card">
             <!-- Logo Section -->
             <div class="logo-section">
-                <img src="{{ asset('images/liosync-logo.png') }}" alt="Liosync POS" class="logo-icon">
+                <img src="{{ asset('images/liosync-login-logo.png') }}" alt="Liosync POS" class="logo-icon">
                 <p class="logo-subtitle">Point of Sale System</p>
             </div>
 

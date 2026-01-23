@@ -128,7 +128,7 @@
         class="w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark shrink-0 flex flex-col h-screen fixed left-0 top-0 z-20 transform md:transform-none transition-all duration-300">
         <div class="h-16 flex items-center px-4 border-b border-border-light dark:border-border-dark justify-between">
             <div class="flex items-center" :class="sidebarCollapsed ? 'md:justify-center md:w-full' : ''">
-                <img src="{{ asset('images/liosync-logo.png') }}" alt="Lio Sync Logo" class="h-10 w-auto object-contain"
+                <img src="{{ asset('images/liosync-icon-transparent.png') }}" alt="Lio Sync Logo" class="h-10 w-auto object-contain"
                     :class="sidebarCollapsed ? '' : 'mr-2'">
                 <h1 x-show="!sidebarCollapsed"
                     class="text-xl font-bold text-gray-800 dark:text-white tracking-tight hidden md:block">Lio Sync</h1>

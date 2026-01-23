@@ -120,7 +120,7 @@
         <!-- Logo & Company -->
         <div class="h-16 flex items-center px-4 border-b border-border-light dark:border-border-dark justify-between">
             <div class="flex items-center" :class="sidebarCollapsed ? 'md:justify-center md:w-full' : ''">
-                <img src="{{ asset('images/liosync-logo.png') }}" alt="Lio Sync Logo" class="h-10 w-auto object-contain" :class="sidebarCollapsed ? '' : 'mr-2'">
+                <img src="{{ asset('images/liosync-icon-transparent.png') }}" alt="Lio Sync Logo" class="h-10 w-auto object-contain" :class="sidebarCollapsed ? '' : 'mr-2'">
                 <div x-show="!sidebarCollapsed" class="flex-1 hidden md:block">
                     <h1 class="text-lg font-bold text-gray-800 dark:text-white">Company Admin</h1>
                     @if(auth()->user()->company)

@@ -116,9 +116,9 @@
         }
 
         .logo-icon {
-            width: 180px;
+            width: 320px;
             height: auto;
-            margin: 0 auto 1.5rem;
+            margin: 0 auto 1rem;
             animation: pulse 2s ease-in-out infinite;
         }
 
@@ -143,6 +143,7 @@
 
         .welcome-text {
             margin-bottom: 1.5rem;
+            text-align: center;
         }
 
         .welcome-text h2 {
@@ -463,7 +464,7 @@
             }
 
             .logo-icon {
-                width: 140px;
+                width: 260px;
             }
 
             .welcome-text h2 {
@@ -473,13 +474,13 @@
 
         @media (min-width: 481px) and (max-width: 768px) {
             .logo-icon {
-                width: 160px;
+                width: 290px;
             }
         }
 
         @media (min-width: 769px) {
             .logo-icon {
-                width: 180px;
+                width: 320px;
             }
         }
     </style>
@@ -502,8 +503,7 @@
         <div class="login-card">
             <!-- Logo Section -->
             <div class="logo-section">
-                <img src="{{ asset('images/liosync-logo.png') }}" alt="Liosync POS" class="logo-icon">
-                <p class="logo-subtitle">Point of Sale System</p>
+                <img src="{{ asset('images/liosync-login-logo.png') }}" alt="Liosync POS" class="logo-icon">
             </div>
 
             <!-- Welcome Text -->
