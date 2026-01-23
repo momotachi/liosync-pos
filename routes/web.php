@@ -38,7 +38,8 @@ Route::post('/register', [RegisterController::class, 'register'])->name('registe
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
 
 // POS Routes (Protected - All authenticated users)
-Route::middleware(['auth'])->group(function () {
+// Added mobile.auth middleware to support token-based auth for mobile WebView
+Route::middleware(['mobile.auth', 'auth'])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::get('/pos/pending-orders', [PosController::class, 'pendingOrders'])->name('pos.pending-orders');
@@ -48,18 +49,4 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos/receipt/{id}', [PosController::class, 'receipt'])->name('pos.receipt');
     Route::get('/pos/receipt/{id}/print', [PosController::class, 'printReceipt'])->name('pos.receipt.print');
     Route::get('/pos/receipt/{id}/kitchen', [PosController::class, 'kitchenReceipt'])->name('pos.receipt.kitchen');
-    Route::get('/pos/receipt/{id}/table', [PosController::class, 'tableReceipt'])->name('pos.receipt.table');
 });
-
-// Purchase Order Routes (Protected - Not for Cashiers)
-Route::middleware(['auth', 'restrict.cashier'])->group(function () {
-    Route::get('/purchase', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase.index');
-    Route::post('/purchase/store', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.store');
-    Route::post('/purchase/{id}/cancel', [\App\Http\Controllers\PurchaseOrderController::class, 'cancelPurchase'])->name('purchase.cancel');
-    Route::get('/purchase/receipt/{id}', [\App\Http\Controllers\PurchaseOrderController::class, 'receipt'])->name('purchase.receipt');
-});
-
-// Load additional route files
-require base_path('routes/superadmin.php');
-require base_path('routes/company.php');
-require base_path('routes/branch.php');

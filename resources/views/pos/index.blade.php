@@ -52,9 +52,11 @@
             <div class="size-8 md:size-10 text-primary flex items-center justify-center bg-primary/10 rounded-lg md:rounded-xl">
                 <span class="material-symbols-outlined text-xl md:text-3xl">local_cafe</span>
             </div>
+            <!-- Hide "JuicePOS" completely on small mobile (< 640px) to prevent collision -->
+            <!-- Show "JP" only if needed, but Logo might be enough. Let's try "JP" for branding but small. -->
             <h1 class="text-base md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
-                <span class="hidden xs:inline">JuicePOS</span>
-                <span class="inline xs:hidden">JP</span>
+                <span class="hidden sm:inline">JuicePOS</span>
+                <span class="inline sm:hidden">JP</span>
             </h1>
         </a>
         <!-- Search Bar - Hidden on mobile -->
@@ -122,7 +124,7 @@
                 </div>
                 <div class="relative">
                     <button @click.stop="open = !open"
-                        class="size-9 md:size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 overflow-hidden border-2 border-white dark:border-white/20 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        class="size-7 md:size-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 overflow-hidden border-2 border-white dark:border-white/20 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                         <img alt="Avatar" class="w-full h-full object-contain p-0.5"
                             src="https://ui-avatars.com/api/?name={{ Auth::check() ? Auth::user()->name : 'Guest' }}&background=05945b&color=fff" />
                     </button>

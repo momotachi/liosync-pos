@@ -3,7 +3,7 @@
 @section('title', 'Dashboard Performa Harian')
 
 @section('content')
-    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 pl-16 pt-2 lg:pl-0 lg:pt-0">
         <div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Performa Harian</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ringkasan metrik keuangan hari ini secara real-time.</p>

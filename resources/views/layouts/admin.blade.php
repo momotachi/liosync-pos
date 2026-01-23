@@ -105,27 +105,26 @@
     x-data="{ sidebarOpen: false, sidebarCollapsed: false }">
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-cloak x-show="sidebarOpen && window.innerWidth < 768" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    <div x-cloak x-show="sidebarOpen && window.innerWidth < 1024" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="sidebarOpen = false"
-        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 md:hidden"></div>
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 lg:hidden"></div>
 
     <!-- Mobile Hamburger Menu Button -->
-    <button @click="sidebarOpen = !sidebarOpen"
-        class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-surface-light dark:bg-surface-dark shadow-lg border border-border-light dark:border-border-dark md:hidden hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-        <span class="material-symbols-outlined text-gray-600 dark:text-gray-300"
-            x-text="sidebarOpen ? 'close' : 'menu'"></span>
+    <button @click="sidebarOpen = !sidebarOpen" x-show="!sidebarOpen"
+        class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-surface-light dark:bg-surface-dark shadow-lg border border-border-light dark:border-border-dark lg:hidden hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">menu</span>
     </button>
 
     <!-- Sidebar -->
-    <aside x-cloak x-show="sidebarOpen || window.innerWidth >= 768" x-transition:enter="transition ease-out duration-300"
+    <aside x-cloak x-show="sidebarOpen || window.innerWidth >= 1024" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
         x-transition:leave-end="-translate-x-full" :class="[
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-            sidebarCollapsed ? 'md:w-20' : 'md:w-64'
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+            sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
         ]"
-        class="w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark shrink-0 flex flex-col h-screen fixed left-0 top-0 z-20 transform md:transform-none transition-all duration-300">
+        class="w-64 bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark shrink-0 flex flex-col h-screen fixed left-0 top-0 z-20 transform lg:transform-none transition-all duration-300">
         <div class="h-16 flex items-center px-4 border-b border-border-light dark:border-border-dark justify-between">
             <div class="flex items-center" :class="sidebarCollapsed ? 'md:justify-center md:w-full' : ''">
                 <img src="{{ asset('images/liosync-icon-transparent.png') }}" alt="Lio Sync Logo" class="h-10 w-auto object-contain"
@@ -136,11 +135,16 @@
             </div>
             <!-- Desktop Collapse Toggle Button -->
             <button @click="sidebarCollapsed = !sidebarCollapsed"
-                class="hidden md:flex p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+                class="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
                 :class="sidebarCollapsed ? 'mx-auto' : ''"
                 :title="sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'">
                 <span class="material-symbols-outlined text-xl"
                     x-text="sidebarCollapsed ? 'chevron_right' : 'chevron_left'"></span>
+            </button>
+            <!-- Mobile Close Button -->
+            <button @click="sidebarOpen = false"
+                class="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors">
+                <span class="material-symbols-outlined text-xl">close</span>
             </button>
         </div>
         <nav class="flex-1 py-4 space-y-1 overflow-y-auto overflow-x-hidden"
@@ -433,7 +437,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main :class="sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'"
+    <main :class="sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'"
         class="flex-1 p-4 md:p-8 overflow-x-hidden transition-all duration-300">
 
         {{-- Subscription Expired Warning Banner --}}
