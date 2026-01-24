@@ -853,7 +853,7 @@
 
                     console.log('Sending payload:', payload);
 
-                    axios.post('/purchase/store', payload)
+                    axios.post('/purchase', payload)
                         .then(response => {
                             console.log('Purchase response:', response.data);
                             this.$dispatch('notify', { message: 'Purchase Order #' + response.data.purchase_id + ' Created Successfully!', type: 'success' });

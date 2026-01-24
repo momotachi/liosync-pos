@@ -14,6 +14,12 @@ Route::middleware(['auth'])->prefix('subscription')->name('subscription.')->grou
 Route::middleware(['auth', 'restrict.cashier', 'subscription'])->group(function () {
     Route::get('/branch', [\App\Http\Controllers\DashboardController::class, 'index'])->name('branch.dashboard');
 
+    // Purchase Orders
+    Route::get('/purchase', [\App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase.index');
+    Route::post('/purchase', [\App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase.store');
+    Route::get('/purchase/{id}/receipt', [\App\Http\Controllers\PurchaseOrderController::class, 'receipt'])->name('purchase.receipt');
+    Route::post('/purchase/{id}/cancel', [\App\Http\Controllers\PurchaseOrderController::class, 'cancelPurchase'])->name('purchase.cancel');
+
     // Items CRUD (Unified Products + Raw Materials)
     Route::get('/branch/items', [\App\Http\Controllers\AdminItemController::class, 'index'])->name('admin.items.index');
     Route::get('/branch/items/create', [\App\Http\Controllers\AdminItemController::class, 'create'])->name('admin.items.create');

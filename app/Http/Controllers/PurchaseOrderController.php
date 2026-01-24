@@ -211,6 +211,11 @@ class PurchaseOrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Purchase Failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all(),
+                'user_id' => Auth::id()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Purchase failed: ' . $e->getMessage()

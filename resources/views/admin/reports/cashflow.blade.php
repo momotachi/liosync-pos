@@ -123,7 +123,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-sm font-medium text-emerald-100">Sisa Cash</p>
-                    <h3 class="text-3xl font-bold text-white mt-2">Rp {{ number_format($initialBalances['cash'] + $metrics['cash_in'] - $metrics['cash_out'], 0, ',', '.') }}</h3>
+                    <h3 class="text-3xl font-bold text-white mt-2">Rp {{ number_format($initialBalances['cash'] + $metrics['cash_in'] - $metrics['cash_out'] + $metrics['total_adjustments_cash'], 0, ',', '.') }}</h3>
                 </div>
                 <div class="p-3 bg-white/20 rounded-lg">
                     <span class="material-symbols-outlined text-white text-3xl">payments</span>
@@ -137,7 +137,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-sm font-medium text-blue-100">Sisa Bank</p>
-                    <h3 class="text-3xl font-bold text-white mt-2">Rp {{ number_format($initialBalances['bank'] + collect($metrics['cash_in_by_method'])->filter(function($val, $key) { return $key !== 'cash'; })->sum(), 0, ',', '.') }}</h3>
+                    <h3 class="text-3xl font-bold text-white mt-2">Rp {{ number_format($initialBalances['bank'] + collect($metrics['cash_in_by_method'])->filter(function($val, $key) { return $key !== 'cash'; })->sum() + $metrics['total_adjustments_bank'], 0, ',', '.') }}</h3>
                 </div>
                 <div class="p-3 bg-white/20 rounded-lg">
                     <span class="material-symbols-outlined text-white text-3xl">account_balance</span>

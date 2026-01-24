@@ -936,11 +936,22 @@ class AdminReportsController extends Controller
         // Net cashflow
         $netCashflow = $totalCashIn - $totalCashOut;
 
+        // Balance Adjustments (Transfers, Manual Edits)
+        $adjustmentsQuery = \App\Models\BalanceAdjustment::whereBetween('adjustment_date', [$from, $to]);
+        if ($branchId) {
+            $adjustmentsQuery->where('branch_id', $branchId);
+        }
+        
+        $totalAdjustmentsCash = (clone $adjustmentsQuery)->where('type', 'cash')->sum('amount');
+        $totalAdjustmentsBank = (clone $adjustmentsQuery)->where('type', 'bank')->sum('amount');
+
         return [
             'cash_in' => $totalCashIn,
             'cash_out' => $totalCashOut,
             'net_cashflow' => $netCashflow,
             'cash_in_by_method' => $cashInByMethod,
+            'total_adjustments_cash' => $totalAdjustmentsCash,
+            'total_adjustments_bank' => $totalAdjustmentsBank,
         ];
     }
 
@@ -1015,8 +1026,8 @@ class AdminReportsController extends Controller
                 'reference_type' => 'adjustment',
                 'payment_method' => $adjustment->type,
                 'amount' => $absAmount,
-                'cash_amount' => $adjustment->type === 'cash' ? ($isPositive ? $absAmount : -$absAmount) : 0,
-                'bank_amount' => $adjustment->type === 'bank' ? ($isPositive ? $absAmount : -$absAmount) : 0,
+                'cash_amount' => $adjustment->type === 'cash' ? $absAmount : 0,
+                'bank_amount' => $adjustment->type === 'bank' ? $absAmount : 0,
             ]);
         }
 
